@@ -38,7 +38,7 @@ class Bytes;
 namespace arch
 {
 
-class YASM_STD_EXPORT X86Opcode : public DebugDumper<X86Opcode>
+class YASM_STD_EXPORT X86Opcode
 {
 public:
     X86Opcode() : m_len(0) {}

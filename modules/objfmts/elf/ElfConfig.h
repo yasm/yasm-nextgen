@@ -48,7 +48,7 @@ class StringTable;
 namespace objfmt
 {
 
-struct YASM_STD_EXPORT ElfConfig : public DebugDumper<ElfConfig>
+struct YASM_STD_EXPORT ElfConfig
 {
     ElfClass        cls;            // ELF class (32/64)
     ElfDataEncoding encoding;       // ELF encoding (MSB/LSB)

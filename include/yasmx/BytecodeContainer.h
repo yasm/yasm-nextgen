@@ -51,7 +51,7 @@ class Section;
 class SourceLocation;
 
 /// A bytecode container.
-class YASM_LIB_EXPORT BytecodeContainer : public DebugDumper<BytecodeContainer>
+class YASM_LIB_EXPORT BytecodeContainer
 {
 public:
     /// Constructor.

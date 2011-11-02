@@ -43,7 +43,7 @@ class SegmentRegister;
 
 /// Base class for an effective address.
 /// Architectures should derive their own implementation from this.
-class YASM_LIB_EXPORT EffAddr : public DebugDumper<EffAddr>
+class YASM_LIB_EXPORT EffAddr
 {
 public:
     typedef std::auto_ptr<EffAddr> Ptr;

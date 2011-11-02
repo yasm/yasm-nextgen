@@ -52,7 +52,7 @@ class Diagnostic;
 class Expr;
 
 /// A bytecode.
-class YASM_LIB_EXPORT Bytecode : public DebugDumper<Bytecode>
+class YASM_LIB_EXPORT Bytecode
 {
     friend class BytecodeContainer;
 
@@ -83,7 +83,7 @@ public:
     /// Bytecode contents (abstract base class).  Any implementation of a
     /// specific bytecode must implement a class derived from this one.
     /// The bytecode implementation-specific data is stored in #m_contents.
-    class YASM_LIB_EXPORT Contents : public DebugDumper<Bytecode::Contents>
+    class YASM_LIB_EXPORT Contents
     {
     public:
         typedef std::auto_ptr<Contents> Ptr;

@@ -54,25 +54,12 @@ private:
 #endif // WITH_XML
 
 template <typename T>
-class YASM_LIB_EXPORT DebugDumper
-{
-public:
-    /// Dump an XML representation to stderr.
-    /// For debugging purposes.
-    void Dump() const;
-};
-
-template <typename T>
-YASM_LIB_EXPORT
-#ifdef NO_XML
-inline
-#endif
 void
-DebugDumper<T>::Dump() const
+DumpXml(const T& cls)
 {
 #ifdef WITH_XML
     pugi::xml_document doc;
-    static_cast<const T*>(this)->Write(doc);
+    cls.Write(doc);
     xml_writer_raw_ostream writer(llvm::errs());
     doc.print(writer);
 #endif // WITH_XML

@@ -47,7 +47,7 @@ namespace yasm
 class Object;
 
 /// Name/value pair.
-class YASM_LIB_EXPORT NameValue : public DebugDumper<NameValue>
+class YASM_LIB_EXPORT NameValue
 {
 public:
     /// Identifier value constructor.
@@ -213,8 +213,7 @@ private:
 };
 
 /// Vector of name/values.
-class YASM_LIB_EXPORT NameValues
-    : public DebugDumper<NameValues>, private stdx::ptr_vector<NameValue>
+class YASM_LIB_EXPORT NameValues : private stdx::ptr_vector<NameValue>
 {
     typedef stdx::ptr_vector<NameValue> base_vector;
 

@@ -56,7 +56,7 @@ class Register;
 class Symbol;
 
 /// An term inside an expression.
-class YASM_LIB_EXPORT ExprTerm : public DebugDumper<ExprTerm>
+class YASM_LIB_EXPORT ExprTerm
 {
 public:
     /// Note loc must be used carefully (in a-b pairs), as only symrecs
@@ -373,7 +373,7 @@ ExprTerm::setIntNum(IntNum intn)
 /// but it is key to doing advanced expression manipulation.  Due to the
 /// RPN storage style, most processing occurs going from back-to-front within
 /// the terms vector.
-class YASM_LIB_EXPORT Expr : public DebugDumper<Expr>
+class YASM_LIB_EXPORT Expr
 {
     friend class ExprTest;
 

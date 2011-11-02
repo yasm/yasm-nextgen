@@ -42,7 +42,7 @@ class Diagnostic;
 class Value;
 
 /// Optimizer.  Determines jump sizes, offset setters, all offsets.
-class YASM_LIB_EXPORT Optimizer : public DebugDumper<Optimizer>
+class YASM_LIB_EXPORT Optimizer
 {
 public:
     Optimizer(Diagnostic& diags);

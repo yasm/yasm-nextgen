@@ -63,7 +63,7 @@ class TargetModifier;
 class Token;
 
 /// A register.
-class YASM_LIB_EXPORT Register : public DebugDumper<Register>
+class YASM_LIB_EXPORT Register
 {
 public:
     Register() {}
@@ -103,7 +103,7 @@ inline llvm::raw_ostream& operator<<
 }
 
 /// A group of registers.
-class YASM_LIB_EXPORT RegisterGroup : public DebugDumper<RegisterGroup>
+class YASM_LIB_EXPORT RegisterGroup
 {
 public:
     RegisterGroup() {}
@@ -129,7 +129,7 @@ private:
 };
 
 /// A segment register.
-class YASM_LIB_EXPORT SegmentRegister : public DebugDumper<SegmentRegister>
+class YASM_LIB_EXPORT SegmentRegister
 {
 public:
     SegmentRegister() {}

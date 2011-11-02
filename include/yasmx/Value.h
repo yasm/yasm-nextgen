@@ -58,7 +58,7 @@ class Object;
 /// A value.  May be absolute or relative.  Outside the parser, #Expr
 /// should only be used for absolute exprs.  Anything that could contain
 /// a relocatable value should use this structure instead.
-class YASM_LIB_EXPORT Value : public DebugDumper<Value>
+class YASM_LIB_EXPORT Value
 {
     friend class ::ValueTest;
 

@@ -45,7 +45,6 @@ namespace yasm
 class YASM_LIB_EXPORT Bytes
     : private std::vector<unsigned char>
     , public EndianState
-    , public DebugDumper<Bytes>
 {
     typedef std::vector<unsigned char> base_vector;
 

@@ -51,7 +51,7 @@ struct BinSection;
 class BinGroup;
 typedef stdx::ptr_vector<BinGroup> BinGroups;
 
-class YASM_STD_EXPORT BinGroup : DebugDumper<BinGroup>
+class YASM_STD_EXPORT BinGroup
 {
 public:
     BinGroup(Section& section, BinSection& bsd);
@@ -76,7 +76,7 @@ public:
     stdx::ptr_vector_owner<BinGroup> m_follow_groups_owner;
 };
 
-class YASM_STD_EXPORT BinLink : DebugDumper<BinLink>
+class YASM_STD_EXPORT BinLink
 {
 public:
     BinLink(Object& object, Diagnostic& diags);

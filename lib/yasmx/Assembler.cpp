@@ -315,14 +315,14 @@ Assembler::Assemble(SourceManager& source_mgr, Diagnostic& diags)
     m_parser->Parse(*m_object, dirs, diags);
 
     if (m_dump_time == Assembler::DUMP_AFTER_PARSE)
-        m_object->Dump();
+        DumpXml(*m_object);
     if (diags.hasErrorOccurred())
         return false;
 
     // Finalize parse
     m_object->Finalize(diags);
     if (m_dump_time == Assembler::DUMP_AFTER_FINALIZE)
-        m_object->Dump();
+        DumpXml(*m_object);
     if (diags.hasErrorOccurred())
         return false;
 
@@ -330,7 +330,7 @@ Assembler::Assemble(SourceManager& source_mgr, Diagnostic& diags)
     m_object->Optimize(diags);
 
     if (m_dump_time == Assembler::DUMP_AFTER_OPTIMIZE)
-        m_object->Dump();
+        DumpXml(*m_object);
 
     if (diags.hasErrorOccurred())
         return false;
@@ -351,7 +351,7 @@ Assembler::Output(llvm::raw_fd_ostream& os, Diagnostic& diags)
                      diags);
 
     if (m_dump_time == DUMP_AFTER_OUTPUT)
-        m_object->Dump();
+        DumpXml(*m_object);
 
     if (diags.hasErrorOccurred())
         return false;

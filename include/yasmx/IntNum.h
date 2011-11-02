@@ -82,7 +82,7 @@ struct YASM_LIB_EXPORT IntNumData
 };
 
 /// Big integer number.
-class YASM_LIB_EXPORT IntNum : public DebugDumper<IntNum>, private IntNumData
+class YASM_LIB_EXPORT IntNum : private IntNumData
 {
     friend YASM_LIB_EXPORT
     llvm::raw_ostream& operator<< (llvm::raw_ostream& os, const IntNum& intn);

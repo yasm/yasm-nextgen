@@ -40,7 +40,7 @@ namespace arch
 
 class X86SegmentRegister;
 
-class YASM_STD_EXPORT X86Common : public DebugDumper<X86Common>
+class YASM_STD_EXPORT X86Common
 {
 public:
     X86Common();

@@ -40,7 +40,7 @@ namespace yasm
 {
 
 /// Associated data interface (abstract base).
-class YASM_LIB_EXPORT AssocData : public DebugDumper<AssocData>
+class YASM_LIB_EXPORT AssocData
 {
 public:
     AssocData() {}
@@ -62,7 +62,6 @@ private:
 
 /// Associated data container.
 class YASM_LIB_EXPORT AssocDataContainer
-    : public DebugDumper<AssocDataContainer>
 {
     struct AssocMapEntry
     {
