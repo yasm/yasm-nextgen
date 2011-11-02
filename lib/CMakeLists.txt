@@ -10,7 +10,7 @@ IF (WITH_XML)
         yasmx/DebugDumper.cpp)
 ENDIF (WITH_XML)
 
-YASM_ADD_LIBRARY(libyasmx SHARED
+SET(LIBYASMX_SOURCES
     llvm/Support/Allocator.cpp
     llvm/Support/APFloat.cpp
     llvm/Support/APInt.cpp
@@ -106,6 +106,12 @@ YASM_ADD_LIBRARY(libyasmx SHARED
     yasmx/SymbolRef.cpp
     yasmx/Value.cpp
     )
+
+INCLUDE(CreateSourceGroups)
+CreateSourceGroups("Source Files" "" "${LIBYASMX_SOURCES}")
+
+YASM_ADD_LIBRARY(libyasmx SHARED ${LIBYASMX_SOURCES})
+
 SET_TARGET_PROPERTIES(libyasmx PROPERTIES
     OUTPUT_NAME "yasmx"
     )

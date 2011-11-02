@@ -75,6 +75,9 @@ ENDIF(regen_init_plugin_cpp)
 
 SET_SOURCE_FILES_PROPERTIES(init_plugin.cpp GENERATED)
 
+INCLUDE(CreateSourceGroups)
+CreateSourceGroups("Source Files" "" "${YASM_MODULES_SRC}")
+
 YASM_ADD_LIBRARY(yasmstdx SHARED
     init_plugin.cpp
     ${YASM_MODULES_SRC}

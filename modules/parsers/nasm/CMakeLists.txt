@@ -20,6 +20,10 @@ ADD_CUSTOM_COMMAND(
     MAIN_DEPENDENCY ${CMAKE_CURRENT_SOURCE_DIR}/parsers/nasm/nasm-std.mac
     )
 
+SOURCE_GROUP("Source Files\\parsers\\nasm" FILES
+    ${CMAKE_CURRENT_SOURCE_DIR}/parsers/nasm/nasm-std.mac
+    )
+
 SET(nasm_parser_DEPS
     ${CMAKE_CURRENT_BINARY_DIR}/nasm-macros.i
     )

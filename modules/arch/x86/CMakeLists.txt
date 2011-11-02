@@ -30,6 +30,12 @@ YASM_GENPERF(
     ${CMAKE_CURRENT_BINARY_DIR}/X86Insn_gas.cpp
     )
 
+SOURCE_GROUP("Source Files\\arch\\x86" FILES
+    ${CMAKE_CURRENT_SOURCE_DIR}/arch/x86/gen_x86_insn.py
+    ${CMAKE_CURRENT_SOURCE_DIR}/arch/x86/X86Arch_cpu.gperf
+    ${CMAKE_CURRENT_SOURCE_DIR}/arch/x86/X86Register.gperf
+    )
+
 YASM_ADD_MODULE(arch_x86
     arch/x86/X86Arch.cpp
     arch/x86/X86Common.cpp
