@@ -69,7 +69,7 @@ yasm::objfmt::append_data(pugi::xml_node out, const BinGroups& groups)
     pugi::xml_node root = out.append_child("BinGroups");
     for (BinGroups::const_iterator group = groups.begin(), end = groups.end();
          group != end; ++group)
-        append_data(root, *group);
+        yasm::append_data(root, *group);
     return root;
 }
 #endif // WITH_XML
