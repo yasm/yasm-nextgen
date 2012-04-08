@@ -18,6 +18,7 @@ ADD_CUSTOM_COMMAND(
            nasm_standard_mac
            ${CMAKE_CURRENT_SOURCE_DIR}/parsers/nasm/nasm-std.mac
     MAIN_DEPENDENCY ${CMAKE_CURRENT_SOURCE_DIR}/parsers/nasm/nasm-std.mac
+    DEPENDS ${GENMACRO_EXE}
     )
 
 SOURCE_GROUP("Source Files\\parsers\\nasm" FILES
