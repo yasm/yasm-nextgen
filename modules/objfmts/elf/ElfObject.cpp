@@ -1479,10 +1479,7 @@ ElfObject::DirGasSection(DirectiveInfo& info, Diagnostic& diags)
     llvm::StringRef sectname = nv->getString();
 
     Section* sect = m_object.FindSection(sectname);
-    bool first = true;
-    if (sect)
-        first = sect->isDefault();
-    else
+    if (!sect)
         sect = AppendSection(sectname, info.getSource(), diags);
 
     m_object.setCurSection(sect);
