@@ -114,7 +114,7 @@ public:
     static llvm::StringRef getKeyword() { return "elf"; }
     static llvm::StringRef getExtension() { return ".o"; }
     static unsigned int getDefaultX86ModeBits() { return 0; }
-    static llvm::StringRef getDefaultDebugFormatKeyword() { return "elfcfi"; }
+    static llvm::StringRef getDefaultDebugFormatKeyword() { return "cfi"; }
     static std::vector<llvm::StringRef> getDebugFormatKeywords();
     static bool isOkObject(Object& object) { return true; }
     static bool Taste(const llvm::MemoryBuffer& in,

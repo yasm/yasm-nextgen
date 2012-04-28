@@ -204,20 +204,20 @@ DwarfDebug::AddDirectives(Directives& dirs, llvm::StringRef parser)
     AddCfiDirectives(dirs, parser);
 }
 
-ElfCfiDebug::~ElfCfiDebug()
+CfiDebug::~CfiDebug()
 {
 }
 
 void
-ElfCfiDebug::AddDirectives(Directives& dirs, llvm::StringRef parser)
+CfiDebug::AddDirectives(Directives& dirs, llvm::StringRef parser)
 {
     AddCfiDirectives(dirs, parser);
 }
 
 void
-ElfCfiDebug::Generate(ObjectFormat& objfmt,
-                      SourceManager& smgr,
-                      Diagnostic& diags)
+CfiDebug::Generate(ObjectFormat& objfmt,
+                   SourceManager& smgr,
+                   Diagnostic& diags)
 {
     GenerateCfi(objfmt, smgr, diags);
 }
@@ -234,5 +234,5 @@ yasm_dbgfmt_dwarf_DoRegister()
     RegisterModule<DebugFormatModule,
                    DebugFormatModuleImpl<DwarfPassDebug> >("dwarf2pass");
     RegisterModule<DebugFormatModule,
-                   DebugFormatModuleImpl<ElfCfiDebug> >("elfcfi");
+                   DebugFormatModuleImpl<CfiDebug> >("cfi");
 }

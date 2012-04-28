@@ -1036,7 +1036,7 @@ ElfObject::Output(llvm::raw_fd_ostream& os,
     unsigned int align = (m_config.cls == ELFCLASS32) ? 4 : 8;
 
     // XXX: ugly workaround to prevent all_syms from kicking in
-    if (dbgfmt.getModule().getKeyword() == "elfcfi")
+    if (dbgfmt.getModule().getKeyword() == "cfi")
         all_syms = false;
 
     // Add filename to strtab and set as .file symbol name
@@ -2002,7 +2002,7 @@ ElfObject::getDebugFormatKeywords()
     {
         "null",
         "stabs",
-        "elfcfi",
+        "cfi",
         "dwarf",
         "dwarfpass",
         "dwarf2",

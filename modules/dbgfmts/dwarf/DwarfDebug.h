@@ -259,16 +259,16 @@ public:
     void Generate(ObjectFormat& objfmt, SourceManager& smgr, Diagnostic& diags);
 };
 
-class YASM_STD_EXPORT ElfCfiDebug : public DwarfDebug
+class YASM_STD_EXPORT CfiDebug : public DwarfDebug
 {
 public:
-    ElfCfiDebug(const DebugFormatModule& module, Object& object)
+    CfiDebug(const DebugFormatModule& module, Object& object)
         : DwarfDebug(module, object)
     {}
-    ~ElfCfiDebug();
+    ~CfiDebug();
 
-    static llvm::StringRef getName() { return "ELF CFI information only"; }
-    static llvm::StringRef getKeyword() { return "elfcfi"; }
+    static llvm::StringRef getName() { return "CFI information only"; }
+    static llvm::StringRef getKeyword() { return "cfi"; }
     static bool isOkObject(Object& object) { return true; }
 
     void AddDirectives(Directives& dirs, llvm::StringRef parser);
