@@ -673,8 +673,6 @@ static void hash_ab(
     sprintf(final->line[0], "  unsigned long rsl = (a ^ scramble[tab[b]]);\n");
   }
 
-  printf("success, found a perfect hash\n");
-
   free(tabq);
   free(tabh);
 }
@@ -902,8 +900,6 @@ void findhash(
       continue;                             /* two keys have same (a,b) pair */
     }
 
-    printf("found distinct (A,B) on attempt %ld\n", trysalt);
-
     /* Given distinct (A,B) for all keys, build a perfect hash */
     if (!perfect(*tabb, *tabh, tabq, *blen, *smax, scramble, nkeys, form))
     {
@@ -932,8 +928,6 @@ void findhash(
     *salt = trysalt;
     break;
   }
-
-  printf("built perfect hash table of size %ld\n", *blen);
 
   /* free working memory */
   free(tabq);
@@ -1144,7 +1138,6 @@ hashform *form;                                           /* user directives */
 
   /* read in the list of keywords */
   getkeys(&keys, &nkeys, textroot, keyroot, form);
-  printf("Read in %ld keys\n",nkeys);
 
   /* find the hash */
   findhash(&tab, &alen, &blen, &salt, &final,
@@ -1152,13 +1145,11 @@ hashform *form;                                           /* user directives */
 
   /* generate the phash.c file */
   make_c(tab, smax, blen, scramble, &final, form);
-  printf("Wrote phash.c\n");
 
   /* clean up memory sources */
   refree(textroot);
   refree(keyroot);
   free((void *)tab);
-  printf("Cleaned up\n");
 }
 
 
