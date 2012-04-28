@@ -64,6 +64,9 @@ public:
         /// to be generated even if the symbol is in the same section as
         /// the value.  Defaults to false.
         bool DisableGlobalSubRelative;
+
+        /// Alignment directives specify power-of-2.  Defaults to false.
+        bool PowerOfTwoAlignment;
     };
 
     /// Generic object configuration.

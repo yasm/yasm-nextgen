@@ -52,8 +52,7 @@ GasParser::GasParser(const ParserModule& module,
 {
     static const GasDirLookup gas_dirs_init[] =
     {
-        // FIXME: Whether this is power-of-two or not depends on arch and objfmt
-        {".align",      &GasParser::ParseDirAlign,  0},
+        {".align",      &GasParser::ParseDirAlign,  2},
         {".p2align",    &GasParser::ParseDirAlign,  1},
         {".balign",     &GasParser::ParseDirAlign,  0},
         {".org",        &GasParser::ParseDirOrg,    0},

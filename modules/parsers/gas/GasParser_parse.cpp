@@ -575,7 +575,8 @@ GasParser::ParseDirAlign(unsigned int power2, SourceLocation source)
     Section* cur_section = m_container->getSection();
 
     // Convert power of two to number of bytes if necessary
-    if (power2)
+    if (power2 == 1
+        || (power2 == 2 && m_object->getOptions().PowerOfTwoAlignment))
         bound = SHL(1, bound);
 
     // Largest .align in the section specifies section alignment.
