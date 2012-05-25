@@ -1597,42 +1597,6 @@ GasParser::ParseInsn()
     return Insn::Ptr(0);
 }
 
-// Directive expression term: only difference from normal is that we look
-// at unescaped (no @ sign) labels to see if they're special.
-namespace {
-class ParseDirectiveExprTerm : public ParseExprTerm
-{
-    Object& m_object;
-public:
-    ParseDirectiveExprTerm(Object& object) : m_object(object) {}
-    ~ParseDirectiveExprTerm() {}
-
-    bool operator() (Expr& e, ParserImpl& parser, bool* handled) const;
-};
-} // anonymous namespace
-
-bool
-ParseDirectiveExprTerm::operator()
-    (Expr& e, ParserImpl& parser, bool* handled) const
-{
-    if (parser.m_token.is(GasToken::identifier) ||
-        parser.m_token.is(GasToken::label))
-    {
-        IdentifierInfo* ii = parser.m_token.getIdentifierInfo();
-        SymbolRef sym = m_object.FindSpecialSymbol(ii->getName());
-        if (sym)
-        {
-            SourceLocation id_source = parser.ConsumeToken();
-            e = Expr(sym, id_source);
-            *handled = true;
-            return true;
-        }
-    }
-
-    *handled = false;
-    return true;
-}
-
 bool
 GasParser::ParseDirective(NameValues* nvs)
 {
@@ -1657,8 +1621,7 @@ GasParser::ParseDirective(NameValues* nvs)
                     {
                         SourceLocation e_src = m_token.getLocation();
                         Expr::Ptr e(new Expr);
-                        ParseDirectiveExprTerm parse_term(*m_object);
-                        if (!ParseExpr(*e, &parse_term))
+                        if (!ParseExpr(*e))
                             return false;
                         nvs->push_back(new NameValue(e));
                         nvs->back().setValueRange(
@@ -1754,8 +1717,7 @@ GasParser::ParseDirective(NameValues* nvs)
             {
                 SourceLocation e_src = m_token.getLocation();
                 Expr::Ptr e(new Expr);
-                ParseDirectiveExprTerm parse_term(*m_object);
-                if (!ParseExpr(*e, &parse_term))
+                if (!ParseExpr(*e))
                     return false;
                 nvs->push_back(new NameValue(e));
                 nvs->back().setValueRange(
