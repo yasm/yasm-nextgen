@@ -753,12 +753,15 @@ public:
                               Location loc,
                               NumericOutput& num_out);
 
+    bool NeedsGOT() const { return m_needs_GOT; }
+
 private:
     ElfObject& m_objfmt;
     Object& m_object;
     llvm::raw_fd_ostream& m_fd_os;
     BytecodeNoOutput m_no_output;
     SymbolRef m_GOT_sym;
+    bool m_needs_GOT;
 };
 } // anonymous namespace
 
@@ -772,6 +775,7 @@ ElfOutput::ElfOutput(llvm::raw_fd_ostream& os,
     , m_fd_os(os)
     , m_no_output(diags)
     , m_GOT_sym(object.FindSymbol("_GLOBAL_OFFSET_TABLE_"))
+    , m_needs_GOT(false)
 {
 }
 
@@ -825,6 +829,10 @@ ElfOutput::ConvertValueToBytes(Value& value,
 
         SymbolRef sym = value.getRelative();
         SymbolRef wrt = value.getWRT();
+
+        // create GOT symbol if we don't already have one.
+        if (wrt && !m_GOT_sym && isWRTElfNeedsGOT(*wrt))
+            m_needs_GOT = true;
 
         if (wrt && wrt == m_objfmt.m_dotdotsym)
             wrt = SymbolRef(0);
@@ -1224,6 +1232,15 @@ ElfObject::Output(llvm::raw_fd_ostream& os,
                 elfsym.Finalize(*sym, diags);
             }
         }
+    }
+
+    // Create GOT symbol if required
+    SymbolRef GOT_sym = m_object.FindSymbol("_GLOBAL_OFFSET_TABLE_");
+    if (!GOT_sym && out.NeedsGOT())
+    {
+        GOT_sym = m_object.getSymbol("_GLOBAL_OFFSET_TABLE_");
+        GOT_sym->Declare(Symbol::EXTERN);
+        FinalizeSymbol(*GOT_sym, strtab, false, diags);
     }
 
     // Partition symbol table to put local symbols first

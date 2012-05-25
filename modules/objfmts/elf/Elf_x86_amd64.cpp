@@ -114,20 +114,20 @@ Elf_x86_amd64::AddSpecialSymbols(Object& object,
 {
     static const ElfSpecialSymbolData ssyms[] =
     {
-        //name,         type,             size,symrel,thread,curpos
-        {"pltoff",      R_X86_64_PLTOFF64,  64,  true, false, false},
-        {"plt",         R_X86_64_PLT32,     32,  true, false, false},
-        {"gotplt",      R_X86_64_GOTPLT64,  64,  true, false, false},
-        {"gotoff",      R_X86_64_GOTOFF64,  64,  true, false, false},
-        {"gotpcrel",    R_X86_64_GOTPCREL,  32,  true, false, false},
-        {"tlsgd",       R_X86_64_TLSGD,     32,  true,  true, false},
-        {"tlsld",       R_X86_64_TLSLD,     32,  true,  true, false},
-        {"gottpoff",    R_X86_64_GOTTPOFF,  32,  true,  true, false},
-        {"tpoff",       R_X86_64_TPOFF32,   32,  true,  true, false},
-        {"dtpoff",      R_X86_64_DTPOFF32,  32,  true,  true, false},
-        {"got",         R_X86_64_GOT32,     32,  true, false, false},
-        {"tlsdesc", R_X86_64_GOTPC32_TLSDESC, 32,true,  true, false},
-        {"tlscall", R_X86_64_TLSDESC_CALL,  32,  true,  true, false}
+        //name,         type,             size,symrel,thread,curpos,needsgot
+        {"pltoff",      R_X86_64_PLTOFF64,  64,  true, false, false, false},
+        {"plt",         R_X86_64_PLT32,     32,  true, false, false, true},
+        {"gotplt",      R_X86_64_GOTPLT64,  64,  true, false, false, false},
+        {"gotoff",      R_X86_64_GOTOFF64,  64,  true, false, false, true},
+        {"gotpcrel",    R_X86_64_GOTPCREL,  32,  true, false, false, true},
+        {"tlsgd",       R_X86_64_TLSGD,     32,  true,  true, false, true},
+        {"tlsld",       R_X86_64_TLSLD,     32,  true,  true, false, true},
+        {"gottpoff",    R_X86_64_GOTTPOFF,  32,  true,  true, false, true},
+        {"tpoff",       R_X86_64_TPOFF32,   32,  true,  true, false, true},
+        {"dtpoff",      R_X86_64_DTPOFF32,  32,  true,  true, false, true},
+        {"got",         R_X86_64_GOT32,     32,  true, false, false, true},
+        {"tlsdesc", R_X86_64_GOTPC32_TLSDESC, 32,true,  true, false, false},
+        {"tlscall", R_X86_64_TLSDESC_CALL,  32,  true,  true, false, false}
     };
 
     for (size_t i=0; i<sizeof(ssyms)/sizeof(ssyms[0]); ++i)

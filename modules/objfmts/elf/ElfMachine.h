@@ -59,6 +59,7 @@ struct ElfSpecialSymbolData
     bool sym_relative:1;    // symbol relative (instead of section relative)
     bool thread_local:1;    // thread local
     bool curpos_adjust:1;   //
+    bool needs_got:1;       // needs GOT symbol in symbol table
 };
 
 struct YASM_STD_EXPORT ElfSpecialSymbol
@@ -92,6 +93,15 @@ isWRTElfPosAdjusted(const Symbol& wrt)
     if (!ssym)
         return false;
     return ssym->curpos_adjust;
+}
+
+inline bool
+isWRTElfNeedsGOT(const Symbol& wrt)
+{
+    const ElfSpecialSymbol* ssym = wrt.getAssocData<ElfSpecialSymbol>();
+    if (!ssym)
+        return false;
+    return ssym->needs_got;
 }
 
 class YASM_STD_EXPORT ElfMachine

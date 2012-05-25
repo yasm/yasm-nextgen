@@ -116,22 +116,22 @@ Elf_x86_x86::AddSpecialSymbols(Object& object, llvm::StringRef parser) const
 {
     static const ElfSpecialSymbolData ssyms[] =
     {
-        //name,         type,             size,symrel,thread,curpos
-        {"plt",         R_386_PLT32,        32,  true, false, false},
-        {"gotoff",      R_386_GOTOFF,       32, false, false, false},
+        //name,         type,             size,symrel,thread,curpos,needsgot
+        {"plt",         R_386_PLT32,        32,  true, false, false, true},
+        {"gotoff",      R_386_GOTOFF,       32, false, false, false, true},
         // special one for NASM
-        {"gotpc",       R_386_GOTPC,        32, false, false,  true},
-        {"tlsgd",       R_386_TLS_GD,       32,  true,  true, false},
-        {"tlsldm",      R_386_TLS_LDM,      32,  true,  true, false},
-        {"gottpoff",    R_386_TLS_IE_32,    32,  true,  true, false},
-        {"tpoff",       R_386_TLS_LE_32,    32,  true,  true, false},
-        {"ntpoff",      R_386_TLS_LE,       32,  true,  true, false},
-        {"dtpoff",      R_386_TLS_LDO_32,   32,  true,  true, false},
-        {"gotntpoff",   R_386_TLS_GOTIE,    32,  true,  true, false},
-        {"indntpoff",   R_386_TLS_IE,       32,  true,  true, false},
-        {"got",         R_386_GOT32,        32,  true, false, false},
-        {"tlsdesc",     R_386_TLS_GOTDESC,  32,  true,  true, false},
-        {"tlscall",     R_386_TLS_DESC_CALL,32,  true,  true, false}
+        {"gotpc",       R_386_GOTPC,        32, false, false,  true, false},
+        {"tlsgd",       R_386_TLS_GD,       32,  true,  true, false, true},
+        {"tlsldm",      R_386_TLS_LDM,      32,  true,  true, false, true},
+        {"gottpoff",    R_386_TLS_IE_32,    32,  true,  true, false, true},
+        {"tpoff",       R_386_TLS_LE_32,    32,  true,  true, false, true},
+        {"ntpoff",      R_386_TLS_LE,       32,  true,  true, false, true},
+        {"dtpoff",      R_386_TLS_LDO_32,   32,  true,  true, false, true},
+        {"gotntpoff",   R_386_TLS_GOTIE,    32,  true,  true, false, true},
+        {"indntpoff",   R_386_TLS_IE,       32,  true,  true, false, true},
+        {"got",         R_386_GOT32,        32,  true, false, false, true},
+        {"tlsdesc",     R_386_TLS_GOTDESC,  32,  true,  true, false, false},
+        {"tlscall",     R_386_TLS_DESC_CALL,32,  true,  true, false, false}
     };
 
     for (size_t i=0; i<sizeof(ssyms)/sizeof(ssyms[0]); ++i)
