@@ -724,7 +724,7 @@ GasParser::ParseDirAscii(unsigned int withzero, SourceLocation source)
             IntNum val;
             if (!ParseInteger(&val))
                 return false;
-            SourceLocation val_source = ConsumeToken();
+            ConsumeToken();
             AppendByte(*m_container, val.getUInt() & 0xff);
 
             MatchRHSPunctuation(GasToken::greater, less_loc);
@@ -1445,7 +1445,7 @@ GasParser::ParseDirIfdef(unsigned int negate, SourceLocation source)
         return false;
     }
     IdentifierInfo* ii = m_token.getIdentifierInfo();
-    SourceLocation id_source = ConsumeToken();
+    ConsumeToken();
 
     bool defined = ii->isSymbol() && ii->getSymbol()->isDefined();
     HandleIf(negate ? !defined : defined, source);
@@ -1711,7 +1711,7 @@ GasParser::ParseDirective(NameValues* nvs)
                 }
                 if (const RegisterGroup* reggroup = ii->getRegGroup())
                 {
-                    SourceLocation reggroup_source = ConsumeToken();
+                    ConsumeToken();
 
                     if (m_token.isNot(GasToken::l_paren))
                     {
@@ -1939,7 +1939,7 @@ GasParser::ParseRegOperand()
     }
     if (const RegisterGroup* reggroup = ii->getRegGroup())
     {
-        SourceLocation reggroup_source = ConsumeToken();
+        ConsumeToken();
 
         if (m_token.isNot(GasToken::l_paren))
             return Operand(reggroup->getReg(0));

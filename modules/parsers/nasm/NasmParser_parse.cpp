@@ -400,7 +400,7 @@ NasmParser::ParseLine()
         case NasmToken::percent: // %line INTNUM '+' INTNUM FILENAME
         {
             // %line
-            SourceLocation percent_loc = ConsumeToken();
+            ConsumeToken();
 
             if (m_token.isNot(NasmToken::identifier))
             {

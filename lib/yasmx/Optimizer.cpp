@@ -572,7 +572,7 @@ Optimizer::Impl::Write(pugi::xml_node out) const
     pugi::xml_node qb = root.append_child("QueueB");
     for (SpanQueue::const_iterator k=m_QB.begin(), end=m_QB.end();
          k != end; ++k)
-        (*k)->WriteRef(qa);
+        (*k)->WriteRef(qb);
 
     // offset setters
     pugi::xml_node osetters = root.append_child("OffsetSetters");
