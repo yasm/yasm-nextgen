@@ -156,7 +156,7 @@ private:
     bool ParseDirSyntax(unsigned int intel, SourceLocation source);
 
     Insn::Ptr ParseInsn();
-    bool ParseDirective(NameValues* nvs);
+    bool ParseDirective(NameValues* nvs, const ParseExprTerm* parse_term = 0);
     Operand ParseMemoryAddress();
     Operand ParseRegOperand();
     Operand ParseOperand();

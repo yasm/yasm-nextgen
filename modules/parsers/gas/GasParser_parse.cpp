@@ -1074,6 +1074,42 @@ GasParser::ParseDirTextSection(unsigned int param, SourceLocation source)
     return true;
 }
 
+// Section directive expression term: only difference from normal is that we
+// look at unescaped (no @ sign) labels to see if they're special.
+namespace {
+class ParseDirSectionExprTerm : public ParseExprTerm
+{
+    Object& m_object;
+public:
+    ParseDirSectionExprTerm(Object& object) : m_object(object) {}
+    ~ParseDirSectionExprTerm() {}
+
+    bool operator() (Expr& e, ParserImpl& parser, bool* handled) const;
+};
+} // anonymous namespace
+
+bool
+ParseDirSectionExprTerm::operator()
+    (Expr& e, ParserImpl& parser, bool* handled) const
+{
+    if (parser.m_token.is(GasToken::identifier) ||
+        parser.m_token.is(GasToken::label))
+    {
+        IdentifierInfo* ii = parser.m_token.getIdentifierInfo();
+        SymbolRef sym = m_object.FindSpecialSymbol(ii->getName());
+        if (sym)
+        {
+            SourceLocation id_source = parser.ConsumeToken();
+            e = Expr(sym, id_source);
+            *handled = true;
+            return true;
+        }
+    }
+
+    *handled = false;
+    return true;
+}
+
 bool
 GasParser::ParseDirSection(unsigned int param, SourceLocation source)
 {
@@ -1114,7 +1150,8 @@ GasParser::ParseDirSection(unsigned int param, SourceLocation source)
         if (ExpectAndConsume(GasToken::comma, diag::err_expected_comma))
             return false;
 
-        if (!ParseDirective(&nvs))
+        ParseDirSectionExprTerm parse_term(*m_object);
+        if (!ParseDirective(&nvs, &parse_term))
             return false;
     }
 
@@ -1598,7 +1635,7 @@ GasParser::ParseInsn()
 }
 
 bool
-GasParser::ParseDirective(NameValues* nvs)
+GasParser::ParseDirective(NameValues* nvs, const ParseExprTerm* parse_term)
 {
     for (;;)
     {
@@ -1621,7 +1658,7 @@ GasParser::ParseDirective(NameValues* nvs)
                     {
                         SourceLocation e_src = m_token.getLocation();
                         Expr::Ptr e(new Expr);
-                        if (!ParseExpr(*e))
+                        if (!ParseExpr(*e, parse_term))
                             return false;
                         nvs->push_back(new NameValue(e));
                         nvs->back().setValueRange(
@@ -1717,7 +1754,7 @@ GasParser::ParseDirective(NameValues* nvs)
             {
                 SourceLocation e_src = m_token.getLocation();
                 Expr::Ptr e(new Expr);
-                if (!ParseExpr(*e))
+                if (!ParseExpr(*e, parse_term))
                     return false;
                 nvs->push_back(new NameValue(e));
                 nvs->back().setValueRange(
