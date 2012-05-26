@@ -97,7 +97,7 @@ public:
     unsigned long getAlign() const { return m_align; }
     void setAlign(unsigned long align) { m_align = align; }
 
-    ElfSectionIndex getIndex() { return m_index; }
+    ElfSectionIndex getIndex() const { return m_index; }
 
     void setInfo(ElfSectionInfo info) { m_info = info; }
     ElfSectionInfo getInfo() const { return m_info; }
