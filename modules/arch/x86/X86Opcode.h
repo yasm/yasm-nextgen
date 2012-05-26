@@ -76,7 +76,7 @@ public:
     void Mask(int byte, unsigned char mask) { m_opcode[byte] &= mask; }
     void Merge(int byte, unsigned char val) { m_opcode[byte] |= val; }
 
-    unsigned char get(int byte) { return m_opcode[byte]; }
+    unsigned char get(int byte) const { return m_opcode[byte]; }
 
 #ifdef WITH_XML
     pugi::xml_node Write(pugi::xml_node out) const;
