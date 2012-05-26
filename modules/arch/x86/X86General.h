@@ -29,6 +29,10 @@
 #include <memory>
 
 #include "yasmx/Config/export.h"
+#include "yasmx/Bytecode.h"
+
+#include "X86Common.h"
+#include "X86Opcode.h"
 
 
 namespace yasm
@@ -67,6 +71,67 @@ enum X86GeneralPostOp
 
     // Large imm64 that can become a sign-extended imm32.
     X86_POSTOP_SIMM32_AVAIL
+};
+
+class YASM_LIB_EXPORT X86General : public Bytecode::Contents
+{
+public:
+
+    X86General(const X86Common& common,
+               const X86Opcode& opcode,
+               std::auto_ptr<X86EffAddr> ea,
+               std::auto_ptr<Value> imm,
+               unsigned char special_prefix,
+               unsigned char rex,
+               X86GeneralPostOp postop,
+               bool default_rel);
+    ~X86General();
+
+    bool Finalize(Bytecode& bc, Diagnostic& diags);
+    bool CalcLen(Bytecode& bc,
+                 /*@out@*/ unsigned long* len,
+                 const Bytecode::AddSpanFunc& add_span,
+                 Diagnostic& diags);
+    bool Expand(Bytecode& bc,
+                unsigned long* len,
+                int span,
+                long old_val,
+                long new_val,
+                bool* keep,
+                /*@out@*/ long* neg_thres,
+                /*@out@*/ long* pos_thres,
+                Diagnostic& diags);
+    bool Output(Bytecode& bc, BytecodeOutput& bc_out);
+
+    llvm::StringRef getType() const;
+
+    X86General* clone() const;
+
+#ifdef WITH_XML
+    pugi::xml_node Write(pugi::xml_node out) const;
+#endif // WITH_XML
+
+    const X86Opcode& getOpcode() const { return m_opcode; }
+
+private:
+    X86General(const X86General& rhs);
+
+    X86Common m_common;
+    X86Opcode m_opcode;
+
+    /*@null@*/ util::scoped_ptr<X86EffAddr> m_ea;   // effective address
+
+    /*@null@*/ util::scoped_ptr<Value> m_imm;   // immediate or relative value
+
+    unsigned char m_special_prefix;     // "special" prefix (0=none)
+
+    // REX AMD64 extension, 0 if none,
+    // 0xff if not allowed (high 8 bit reg used)
+    unsigned char m_rex;
+
+    unsigned char m_default_rel;
+
+    X86GeneralPostOp m_postop;
 };
 
 YASM_STD_EXPORT
