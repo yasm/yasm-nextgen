@@ -377,6 +377,9 @@ CoffOutput::OutputSection(Section& sect)
             coffsect->m_size += i->getTotalLen();
     }
 
+    if (getDiagnostics().hasErrorOccurred())
+        return false;
+
     // Sanity check final section size
     assert(coffsect->m_size == sect.bytecodes_back().getNextOffset());
 
