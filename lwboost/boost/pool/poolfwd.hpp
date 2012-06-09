@@ -9,6 +9,12 @@
 #ifndef BOOST_POOLFWD_HPP
 #define BOOST_POOLFWD_HPP
 
+/*!
+  \file
+  \brief Forward declarations of all public (non-implemention) classes.
+*/
+
+
 // std::size_t
 #include <cstddef>
 
@@ -28,6 +34,12 @@ struct default_user_allocator_malloc_free;
 
 template <typename UserAllocator = default_user_allocator_new_delete>
 class pool;
+
+//
+// Location: <boost/pool/object_pool.hpp>
+//
+template <typename T, typename UserAllocator = default_user_allocator_new_delete>
+class object_pool;
 
 } // namespace boost
 
