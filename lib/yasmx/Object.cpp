@@ -31,7 +31,7 @@
 #include <algorithm>
 #include <memory>
 
-#include <boost/pool/pool.hpp>
+#include <boost/pool/object_pool.hpp>
 
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/StringMap.h"
@@ -69,24 +69,17 @@ public:
     Impl(bool nocase)
         : sym_map(nocase)
         , special_sym_map(true)
-        , m_sym_pool(sizeof(Symbol))
     {}
     ~Impl() {}
 
     Symbol* NewSymbol(llvm::StringRef name)
     {
-        Symbol* sym = static_cast<Symbol*>(m_sym_pool.malloc());
-        new (sym) Symbol(name);
-        return sym;
+        return m_sym_pool.construct(name);
     }
 
     void DeleteSymbol(Symbol* sym)
     {
-        if (sym)
-        {
-            sym->~Symbol();
-            m_sym_pool.free(sym);
-        }
+        m_sym_pool.destroy(sym);
     }
 
     typedef hamt<llvm::StringRef, Symbol, SymGetName> SymbolTable;
@@ -102,7 +95,7 @@ public:
 
 private:
     /// Pool for symbols not in the symbol table.
-    boost::pool<> m_sym_pool;
+    boost::object_pool<Symbol> m_sym_pool;
 };
 } // namespace yasm
 
