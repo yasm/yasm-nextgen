@@ -94,9 +94,9 @@ vphaddubw xmm1, xmm2			; 8F E9 78 D1 312
 vphaddubw xmm1, [0]			; 8F E9 78 D1 016 00 00
 vphaddubw xmm1, dqword [0]		; 8F E9 78 D1 016 00 00
 
-vphaddudq xmm1, xmm2			; 8F E9 78 D8 312
-vphaddudq xmm1, [0]			; 8F E9 78 D8 016 00 00
-vphaddudq xmm1, dqword [0]		; 8F E9 78 D8 016 00 00
+vphaddudq xmm1, xmm2			; 8F E9 78 DB 312
+vphaddudq xmm1, [0]			; 8F E9 78 DB 016 00 00
+vphaddudq xmm1, dqword [0]		; 8F E9 78 DB 016 00 00
 
 vphadduwd xmm1, xmm2			; 8F E9 78 D6 312
 vphadduwd xmm1, [0]			; 8F E9 78 D6 016 00 00
