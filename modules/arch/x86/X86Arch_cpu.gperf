@@ -386,6 +386,16 @@ eptvpid,	X86CpuSet,	X86Arch::CPU_EPTVPID
 noeptvpid,	X86CpuClear,	X86Arch::CPU_EPTVPID
 smx,		X86CpuSet,	X86Arch::CPU_SMX
 nosmx,		X86CpuClear,	X86Arch::CPU_SMX
+avx2,		X86CpuSet,	X86Arch::CPU_AVX2
+noavx2,		X86CpuClear,	X86Arch::CPU_AVX2
+bmi1,		X86CpuSet,	X86Arch::CPU_BMI1
+nobmi1,		X86CpuClear,	X86Arch::CPU_BMI1
+bmi2,		X86CpuSet,	X86Arch::CPU_BMI2
+nobmi2,		X86CpuClear,	X86Arch::CPU_BMI2
+invpcid,	X86CpuSet,	X86Arch::CPU_INVPCID
+noinvpcid,	X86CpuClear,	X86Arch::CPU_INVPCID
+lzcnt,		X86CpuSet,	X86Arch::CPU_LZCNT
+nolzcnt,	X86CpuClear,	X86Arch::CPU_LZCNT
 # Change NOP patterns
 basicnop,	X86Nop,	X86Arch::NOP_BASIC
 intelnop,	X86Nop,	X86Arch::NOP_INTEL
