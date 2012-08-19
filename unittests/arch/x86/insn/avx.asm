@@ -1739,9 +1739,9 @@ vpminud xmm1, xmm2, [rax] 		; c4 e2 69 3b 08
 vpminud xmm1, xmm2, dqword [rax] 	; c4 e2 69 3b 08
 
 pmovmskb eax, xmm1 			; 66 0f d7 c1
-pmovmskb rax, xmm1 			; 66 48 0f d7 c1
+pmovmskb rax, xmm1 			; 66 0f d7 c1
 vpmovmskb eax, xmm1 			; c5 f9 d7 c1
-vpmovmskb rax, xmm1 			; c4 e1 f9 d7 c1
+vpmovmskb rax, xmm1 			; c5 f9 d7 c1
 
 pmovsxbw xmm1, xmm2 			; 66 0f 38 20 ca
 pmovsxbw xmm1, [rax] 			; 66 0f 38 20 08
