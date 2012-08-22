@@ -218,8 +218,6 @@ X86General::CalcLen(Bytecode& bc,
                          &ip_rel, diags))
         {
             // failed, don't bother checking rest of insn
-            diags.Report(m_ea->m_disp.getSource().getBegin(),
-                         diag::err_ea_length_unknown);
             return false;
         }
 

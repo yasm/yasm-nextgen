@@ -148,7 +148,11 @@ enum X86OperandType
     // EAX memory operand only (EA) [special case for SVM skinit opcode]
     OPT_MemEAX = 26,
     // DX memory operand only (EA) [special case for in/out opcodes]
-    OPT_MemDX = 27
+    OPT_MemDX = 27,
+    // XMM VSIB memory operand
+    OPT_MemXMMIndex = 28,
+    // YMM VSIB memory operand
+    OPT_MemYMMIndex = 29
 };
 
 enum X86OperandSize
@@ -221,6 +225,51 @@ enum X86OperandPostAction
     // large imm64 that can become a sign-extended imm32
     OPAP_SImm32Avail = 4
 };
+
+class IsRegType
+{
+public:
+    IsRegType(X86Register::Type type) : m_type(type) {}
+    bool operator() (const ExprTerm& term) const
+    {
+        if (const Register* reg = term.getRegister())
+        {
+            const X86Register* x86reg = static_cast<const X86Register*>(reg);
+            if (x86reg->is(m_type))
+                return true;
+        }
+        return false;
+    }
+private:
+    X86Register::Type m_type;
+};
+
+template <typename Func>
+bool
+ContainsMatch(const Expr& e, const Func& match)
+{
+    const ExprTerms& terms = e.getTerms();
+    int pos = terms.size() - 1;
+
+    const ExprTerm& parent = terms[pos];
+    if (!parent.isOp())
+    {
+        if (match(parent))
+            return true;
+        return false;
+    }
+    for (int n=pos-1; n>=0; --n)
+    {
+        const ExprTerm& child = terms[n];
+        if (child.isEmpty())
+            continue;
+        if (child.m_depth <= parent.m_depth)
+            break;  // Stop when we're out of children
+        if (match(child))
+            return true;
+    }
+    return false;
+}
 } // anonymous namespace
 
 namespace yasm { namespace arch {
@@ -767,6 +816,20 @@ X86Insn::MatchOperand(const Operand& op, const X86InfoOperand& info_op,
             const X86Register* reg2 = static_cast<const X86Register*>
                 (ea->m_disp.getAbs()->getRegister());
             if (reg2->isNot(X86Register::REG16) || reg2->getNum() != 2)
+                return false;
+            break;
+        }
+        case OPT_MemXMMIndex:
+        {
+            if (!ea || !ContainsMatch(*ea->m_disp.getAbs(),
+                                      IsRegType(X86Register::XMMREG)))
+                return false;
+            break;
+        }
+        case OPT_MemYMMIndex:
+        {
+            if (!ea || !ContainsMatch(*ea->m_disp.getAbs(),
+                                      IsRegType(X86Register::YMMREG)))
                 return false;
             break;
         }
@@ -1335,6 +1398,18 @@ BuildGeneral::ApplyOperand(const X86InfoOperand& info_op, Operand& op)
                     if (info_op.type == OPT_MemOffs)
                         // Special-case for MOV MemOffs instruction
                         m_x86_ea->setDispOnly();
+                    else if (info_op.type == OPT_MemXMMIndex)
+                    {
+                        // Remember VSIB mode
+                        m_x86_ea->m_vsib_mode = 1;
+                        m_x86_ea->m_need_sib = 1;
+                    }
+                    else if (info_op.type == OPT_MemYMMIndex)
+                    {
+                        // Remember VSIB mode
+                        m_x86_ea->m_vsib_mode = 2;
+                        m_x86_ea->m_need_sib = 1;
+                    }
                     else if (m_default_rel &&
                              !m_x86_ea->m_not_pc_rel &&
                              (!segreg ||

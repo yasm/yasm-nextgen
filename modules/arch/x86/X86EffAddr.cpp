@@ -90,6 +90,7 @@ X86EffAddr::X86EffAddr()
       m_modrm(0),
       m_sib(0),
       m_need_sib(0),
+      m_vsib_mode(0),
       m_valid_modrm(false),
       m_need_modrm(false),
       m_valid_sib(false)
@@ -101,6 +102,7 @@ X86EffAddr::X86EffAddr(const X86EffAddr& rhs)
       m_modrm(rhs.m_modrm),
       m_sib(rhs.m_sib),
       m_need_sib(rhs.m_need_sib),
+      m_vsib_mode(rhs.m_vsib_mode),
       m_valid_modrm(rhs.m_valid_modrm),
       m_need_modrm(rhs.m_need_modrm),
       m_valid_sib(rhs.m_valid_sib)
@@ -165,6 +167,7 @@ X86EffAddr::X86EffAddr(bool xform_rip_plus, std::auto_ptr<Expr> e)
       // We won't know whether we need an SIB until we know more about expr
       // and the BITS/address override setting.
       m_need_sib(0xff),
+      m_vsib_mode(0),
       m_valid_modrm(false),
       m_need_modrm(true),
       m_valid_sib(false)
@@ -199,6 +202,8 @@ X86EffAddr::DoWrite(pugi::xml_node out) const
     append_data(sib, llvm::Twine::utohexstr(m_sib).str());
     sib.append_attribute("need") = static_cast<bool>(m_need_sib);
     sib.append_attribute("valid") = static_cast<bool>(m_valid_sib);
+    sib.append_attribute("vsibmode") =
+        (llvm::Twine::utohexstr(m_vsib_mode).str()).c_str();
     return root;
 }
 #endif // WITH_XML
@@ -207,10 +212,20 @@ namespace {
 class X86EAChecker
 {
 public:
-    X86EAChecker(unsigned int bits, unsigned int addrsize, Diagnostic& diags)
-        : m_bits(bits), m_addrsize(addrsize), m_diags(diags)
+    X86EAChecker(unsigned int bits,
+                 unsigned int addrsize,
+                 unsigned int vsib_mode,
+                 Diagnostic& diags)
+        : m_bits(bits)
+        , m_addrsize(addrsize)
+        , m_vsib_mode(vsib_mode)
+        , m_diags(diags)
     {
-        for (int i=0; i<17; ++i)
+        // Normally don't check SIMD regs
+        m_regcount = 17;
+        if (vsib_mode != 0)
+            m_regcount = 33;
+        for (int i=0; i<m_regcount; ++i)
             m_regmult[i] = 0;
     }
 
@@ -223,9 +238,10 @@ public:
         kREG_RSP,       kREG_RBP,   kREG_RSI,   kREG_RDI,
         kREG_R8,        kREG_R9,    kREG_R10,   kREG_R11,
         kREG_R12,       kREG_R13,   kREG_R14,   kREG_R15,
-        kREG_RIP
+        kREG_RIP,       kSIMDREGS
     };
-    int m_regmult[17];
+    int m_regcount;
+    int m_regmult[33];
 
 private:
     void DistReg(Expr& e, int& pos, bool simplify_reg_mul);
@@ -239,6 +255,7 @@ private:
 private:
     unsigned int m_bits;
     unsigned int m_addrsize;
+    unsigned int m_vsib_mode;
     Diagnostic& m_diags;
 };
 } // anonymous namespace
@@ -251,26 +268,42 @@ X86EAChecker::getReg(ExprTerm& term, int* regnum)
     const X86Register* reg =
         static_cast<const X86Register*>(term.getRegister());
     assert(reg != 0);
+    unsigned int myregnum = reg->getNum();
+
     switch (reg->getType())
     {
         case X86Register::REG16:
             if (m_addrsize != 16)
                 return false;
-            *regnum = reg->getNum();
+            *regnum = myregnum;
             // only allow BX, SI, DI, BP
-            if (*regnum != kREG_RBX && *regnum != kREG_RSI
-                && *regnum != kREG_RDI && *regnum != kREG_RBP)
+            if (myregnum != kREG_RBX && myregnum != kREG_RSI
+                && myregnum != kREG_RDI && myregnum != kREG_RBP)
                 return false;
             break;
         case X86Register::REG32:
             if (m_addrsize != 32)
                 return false;
-            *regnum = reg->getNum();
+            *regnum = myregnum;
             break;
         case X86Register::REG64:
             if (m_addrsize != 64)
                 return false;
-            *regnum = reg->getNum();
+            *regnum = myregnum;
+            break;
+        case X86Register::XMMREG:
+            if (m_vsib_mode != 1)
+                return false;
+            if (m_bits != 64 && myregnum > 7)
+                return false;
+            *regnum = 17+myregnum;
+            break;
+        case X86Register::YMMREG:
+            if (m_vsib_mode != 2)
+                return false;
+            if (m_bits != 64 && myregnum > 7)
+                return false;
+            *regnum = 17+myregnum;
             break;
         case X86Register::RIP:
             if (m_bits != 64)
@@ -285,7 +318,8 @@ X86EAChecker::getReg(ExprTerm& term, int* regnum)
     term.Zero();
 
     // we're okay
-    assert(*regnum < 17 && "register number too large");
+    assert(myregnum < static_cast<unsigned int>(m_regcount)
+           && "register number too large");
     return true;
 }
 
@@ -762,7 +796,7 @@ X86EffAddr::Check3264(unsigned int addrsize,
         m_pc_rel = false;
     }
 
-    X86EAChecker checker(bits, addrsize, diags);
+    X86EAChecker checker(bits, addrsize, m_vsib_mode, diags);
 
     if (m_disp.hasAbs())
     {
@@ -790,7 +824,7 @@ X86EffAddr::Check3264(unsigned int addrsize,
     // Find a basereg (*1, but not indexreg), if there is one.
     // Also, if an indexreg hasn't been assigned, try to find one.
     // Meanwhile, check to make sure there's no negative register mults.
-    for (i=0; i<17; i++)
+    for (i=0; i<checker.m_regcount; i++)
     {
         if (checker.m_regmult[i] < 0)
         {
@@ -805,10 +839,29 @@ X86EffAddr::Check3264(unsigned int addrsize,
             indexreg = i;
     }
 
-    // Handle certain special cases of indexreg mults when basereg is
-    // empty.
-    if (indexreg != X86EAChecker::kREG_NONE
-        && basereg == X86EAChecker::kREG_NONE)
+    if (m_vsib_mode != 0)
+    {
+        // For VSIB, the SIMD register needs to go into the indexreg.
+        // Also check basereg (must be a GPR if present) and indexreg
+        // (must be a SIMD register).
+        if (basereg >= X86EAChecker::kSIMDREGS
+            && (indexreg == X86EAChecker::kREG_NONE
+                || checker.m_regmult[indexreg] == 1))
+        {
+            std::swap(basereg, indexreg);
+        }
+        if (basereg >= X86EAChecker::kREG_RIP
+            || indexreg < X86EAChecker::kSIMDREGS)
+        {
+            diags.Report(m_disp.getSource().getBegin(), diag::err_invalid_ea);
+            return false;
+        }
+    }
+    else if (indexreg != X86EAChecker::kREG_NONE
+             && basereg == X86EAChecker::kREG_NONE)
+    {
+        // Handle certain special cases of indexreg mults when basereg is
+        // empty.
         switch (checker.m_regmult[indexreg])
         {
             case 1:
@@ -834,10 +887,11 @@ X86EffAddr::Check3264(unsigned int addrsize,
                 checker.m_regmult[indexreg]--;
                 break;
         }
+    }
 
     // Make sure there's no other registers than the basereg and indexreg
     // we just found.
-    for (i=0; i<17; i++)
+    for (i=0; i<checker.m_regcount; i++)
     {
         if (i != basereg && i != indexreg && checker.m_regmult[i] != 0)
         {
@@ -987,8 +1041,14 @@ X86EffAddr::Check3264(unsigned int addrsize,
             // Any scale field is valid, just leave at 0.
         else
         {
-            if (!setRexFromReg(rex, &low3, X86Register::REG64, indexreg, bits,
-                               X86_REX_X))
+            X86Register::Type type = X86Register::REG64;
+            int indexregnum = indexreg;
+            if (indexreg >= X86EAChecker::kSIMDREGS)
+            {
+                type = X86Register::XMMREG;
+                indexregnum = indexreg - X86EAChecker::kSIMDREGS;
+            }
+            if (!setRexFromReg(rex, &low3, type, indexregnum, bits, X86_REX_X))
             {
                 diags.Report(m_disp.getSource().getBegin(),
                              diag::err_high8_rex_conflict);
@@ -1069,7 +1129,7 @@ X86EffAddr::Check16(unsigned int bits,
     m_valid_sib = false;
     m_need_sib = 0;
 
-    X86EAChecker checker(bits, 16, diags);
+    X86EAChecker checker(bits, 16, m_vsib_mode, diags);
 
     if (m_disp.hasAbs())
     {
@@ -1167,6 +1227,12 @@ X86EffAddr::Check(unsigned char* addrsize,
                 }
                 /*@fallthrough@*/
             default:
+                // If SIB is required, but we're in 16-bit mode, set to 32.
+                if (bits == 16 && m_need_sib == 1)
+                {
+                    *addrsize = 32;
+                    break;
+                }
                 // check for use of 16 or 32-bit registers; if none are used
                 // default to bits setting.
                 if (!m_disp.hasAbs() ||

@@ -84,6 +84,9 @@ public:
     // 1 if SIB byte needed, 0 if not, 0xff if unknown
     unsigned char m_need_sib;
 
+    // VSIB uses the normal SIB byte, but this flag enables it.
+    unsigned char m_vsib_mode;  // 0 if not, 1 if XMM, 2 if YMM
+
     bool m_valid_modrm:1;   // 1 if Mod/RM byte currently valid, 0 if not
     bool m_need_modrm:1;    // 1 if Mod/RM byte needed, 0 if not
     bool m_valid_sib:1;     // 1 if SIB byte currently valid, 0 if not

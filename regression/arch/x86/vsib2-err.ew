@@ -1,0 +1,5 @@
+<stdin>:5:17: error: invalid effective address
+<stdin>:8:12: error: invalid effective address
+<stdin>:9:12: error: invalid effective address
+<stdin>:14:17: error: invalid effective address
+<stdin>:18:17: warning: invalid displacement size; fixed
