@@ -1734,11 +1734,12 @@ BuildGeneral::Finish(BytecodeContainer& container,
         {
             // Look at the first byte of the opcode for the XOP mmmmm field.
             // Leave R=X=B=1 for now.
-            assert((m_opcode.get(0) == 0x08 || m_opcode.get(0) == 0x09) &&
-                   "first opcode byte of XOP must be 0x08 or 0x09");
+            unsigned char op0 = m_opcode.get(0);
+            assert((op0 == 0x08 || op0 == 0x09 || op0 == 0x0A) &&
+                   "first opcode byte of XOP must be 0x08, 0x09, or 0x0A");
             // Real opcode is in byte 1.
             opcode[2] = m_opcode.get(1);
-            opcode[0] |= m_opcode.get(0);
+            opcode[0] |= op0;
         }
         else
         {

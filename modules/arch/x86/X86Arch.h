@@ -142,7 +142,8 @@ public:
         CPU_BMI1,           // Intel BMI1 instructions
         CPU_BMI2,           // Intel BMI2 instructions
         CPU_INVPCID,        // Intel INVPCID instruction
-        CPU_LZCNT           // Intel LZCNT instruction
+        CPU_LZCNT,          // Intel LZCNT instruction
+        CPU_TBM             // AMD TBM instruction
     };
     typedef std::bitset<64> CpuMask;
 
