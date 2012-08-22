@@ -44,7 +44,8 @@ public:
         ADDRSIZE = 2<<8,
         OPERSIZE = 3<<8,
         SEGREG = 4<<8,
-        REX = 5<<8
+        REX = 5<<8,
+        ACQREL = 6<<8       // TSX hint prefixes
     };
 
     X86Prefix(Type type, unsigned char value);

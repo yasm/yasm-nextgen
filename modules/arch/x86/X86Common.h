@@ -62,6 +62,9 @@ public:
     unsigned char m_opersize;       // 0 or =mode_bits => no override
     unsigned char m_lockrep_pre;    // 0 indicates no prefix
 
+    // We need this because xacquire/xrelease might require F0 prefix.
+    unsigned char m_acqrel_pre;     // 0 indicates no prefix
+
     unsigned char m_mode_bits;
 };
 

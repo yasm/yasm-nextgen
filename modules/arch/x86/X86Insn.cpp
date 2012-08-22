@@ -409,6 +409,7 @@ X86Prefix::Write(pugi::xml_node out) const
         case OPERSIZE:  type = "OPERSIZE"; break;
         case SEGREG:    type = "SEGREG"; break;
         case REX:       type = "REX"; break;
+        case ACQREL:    type = "ACQREL"; break;
     }
     append_data(root, llvm::Twine::utohexstr(m_value).str());
     return root;

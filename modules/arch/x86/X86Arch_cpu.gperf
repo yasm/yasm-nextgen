@@ -398,6 +398,8 @@ lzcnt,		X86CpuSet,	X86Arch::CPU_LZCNT
 nolzcnt,	X86CpuClear,	X86Arch::CPU_LZCNT
 tbm,		X86CpuSet,	X86Arch::CPU_TBM
 notbm,		X86CpuClear,	X86Arch::CPU_TBM
+tsx,		X86CpuSet,	X86Arch::CPU_TSX
+notsx,		X86CpuClear,	X86Arch::CPU_TSX
 # Change NOP patterns
 basicnop,	X86Nop,	X86Arch::NOP_BASIC
 intelnop,	X86Nop,	X86Arch::NOP_INTEL

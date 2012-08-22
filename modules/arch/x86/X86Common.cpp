@@ -42,6 +42,7 @@ X86Common::X86Common()
     : m_addrsize(0),
       m_opersize(0),
       m_lockrep_pre(0),
+      m_acqrel_pre(0),
       m_mode_bits(0)
 {
 }
@@ -60,6 +61,15 @@ X86Common::ApplyPrefixes(unsigned int def_opersize_64,
         const X86Prefix* prefix = static_cast<const X86Prefix*>(i->first);
         switch (prefix->getType())
         {
+            // We perhaps should enforce that TSX hints work only with a
+            // predefined set of instructions, and in most cases only with F0
+            // prefix.  However, as with other prefixes, we rely on the user
+            // knowing when it is legal to use.
+            case X86Prefix::ACQREL:
+                if (m_acqrel_pre != 0)
+                    diags.Report(i->second, diag::warn_multiple_acq_rel);
+                m_acqrel_pre = prefix->getValue();
+                break;
             case X86Prefix::LOCKREP:
                 if (m_lockrep_pre != 0)
                     diags.Report(i->second, diag::warn_multiple_lock_rep);
@@ -139,6 +149,9 @@ X86Common::Write(pugi::xml_node out) const
     root.append_attribute("lockrep") =
         llvm::Twine::utohexstr(static_cast<unsigned int>(m_lockrep_pre))
         .str().c_str();
+    root.append_attribute("acqrel") =
+        llvm::Twine::utohexstr(static_cast<unsigned int>(m_acqrel_pre))
+        .str().c_str();
     root.append_attribute("bits") = static_cast<unsigned int>(m_mode_bits);
     return root;
 }
@@ -156,6 +169,8 @@ X86Common::getLen() const
         len++;
     if (m_lockrep_pre != 0)
         len++;
+    if (m_acqrel_pre != 0)
+        len++;
 
     return len;
 }
@@ -170,6 +185,9 @@ X86Common::ToBytes(Bytes& bytes, const X86SegmentRegister* segreg) const
     if ((m_mode_bits != 64 && m_opersize != m_mode_bits) ||
         (m_mode_bits == 64 && m_opersize == 16))
         Write8(bytes, 0x66);
+    // TSX hints come before lock prefix
+    if (m_acqrel_pre != 0)
+        Write8(bytes, m_acqrel_pre);
     if (m_lockrep_pre != 0)
         Write8(bytes, m_lockrep_pre);
 }
