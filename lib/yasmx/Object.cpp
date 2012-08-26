@@ -134,8 +134,9 @@ Object::~Object()
 void
 Object::Finalize(Diagnostic& diags)
 {
-    std::for_each(m_sections.begin(), m_sections.end(),
-                  TR1::bind(&Section::Finalize, _1, TR1::ref(diags)));
+    for (section_iterator i=m_sections.begin(), end=m_sections.end();
+         i != end; ++i)
+        i->Finalize(diags);
 }
 
 void
