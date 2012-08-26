@@ -36,14 +36,20 @@
 
 using namespace yasm;
 
+namespace {
+struct TransformDistBase
+{
+    virtual ~TransformDistBase() {}
+    void operator() (Expr& e, int pos);
+    virtual bool TransformDelta(ExprTerm& term, Location loc, Location loc2)
+        = 0;
+};
+
 // Transforms instances of Symbol-Symbol [Symbol+(-1*Symbol)] into single
 // ExprTerms if possible.  Uses a simple n^2 algorithm because n is usually
 // quite small.  Also works for loc-loc (or Symbol-loc, loc-Symbol).
-static void
-TransformDistBase(Expr& e, int pos,
-                  const TR1::function<bool (ExprTerm& term,
-                                            Location loc1,
-                                            Location loc2)> func)
+void
+TransformDistBase::operator() (Expr& e, int pos)
 {
     ExprTerms& terms = e.getTerms();
     if (pos < 0)
@@ -151,7 +157,7 @@ TransformDistBase(Expr& e, int pos,
                 sub_loc.bc->getContainer())
                 continue;
 
-            if (func(relterm, sub_loc, rel_loc))
+            if (TransformDelta(relterm, sub_loc, rel_loc))
             {
                 // Set the matching (-1*Symbol) term to 0
                 // (will remove from expression during simplify)
@@ -165,52 +171,17 @@ TransformDistBase(Expr& e, int pos,
     }
 }
 
-namespace {
-struct CalcDistFunctor
+struct CalcDistFunctor : public TransformDistBase
 {
-    bool operator() (ExprTerm& term, Location loc, Location loc2)
-    {
-        IntNum dist;
-        if (!CalcDist(loc, loc2, &dist))
-            return false;
-        // Change the term to an integer
-        term = ExprTerm(dist, term.getSource(), term.m_depth);
-        return true;
-    }
+    bool TransformDelta(ExprTerm& term, Location loc, Location loc2);
 };
-} // anonymous namespace
 
-void
-yasm::SimplifyCalcDist(Expr& e, Diagnostic& diags)
+struct CalcDistNoBCFunctor : public TransformDistBase
 {
-    CalcDistFunctor functor;
-    e.Simplify(diags, TR1::bind(&TransformDistBase, _1, _2, functor));
-}
-
-namespace {
-struct CalcDistNoBCFunctor
-{
-    bool operator() (ExprTerm& term, Location loc, Location loc2)
-    {
-        IntNum dist;
-        if (!CalcDistNoBC(loc, loc2, &dist))
-            return false;
-        // Change the term to an integer
-        term = ExprTerm(dist, term.getSource(), term.m_depth);
-        return true;
-    }
+    bool TransformDelta(ExprTerm& term, Location loc, Location loc2);
 };
-} // anonymous namespace
 
-void
-yasm::SimplifyCalcDistNoBC(Expr& e, Diagnostic& diags)
-{
-    CalcDistNoBCFunctor functor;
-    e.Simplify(diags, TR1::bind(&TransformDistBase, _1, _2, functor));
-}
-
-namespace {
-struct SubstDistFunctor
+struct SubstDistFunctor : public TransformDistBase
 {
     const TR1::function<void (unsigned int subst,
                               Location loc,
@@ -223,18 +194,57 @@ struct SubstDistFunctor
         : m_func(func), m_subst(0)
     {}
 
-    bool operator() (ExprTerm& term, Location loc, Location loc2)
-    {
-        // Call higher-level callback
-        m_func(m_subst, loc, loc2);
-        // Change the term to an subst
-        term = ExprTerm(ExprTerm::Subst(m_subst), term.getSource(),
-                        term.m_depth);
-        m_subst++;
-        return true;
-    }
+    bool TransformDelta(ExprTerm& term, Location loc, Location loc2);
 };
 } // anonymous namespace
+
+bool
+CalcDistFunctor::TransformDelta(ExprTerm& term, Location loc, Location loc2)
+{
+    IntNum dist;
+    if (!CalcDist(loc, loc2, &dist))
+        return false;
+    // Change the term to an integer
+    term = ExprTerm(dist, term.getSource(), term.m_depth);
+    return true;
+}
+
+void
+yasm::SimplifyCalcDist(Expr& e, Diagnostic& diags)
+{
+    CalcDistFunctor functor;
+    e.Simplify(diags, functor);
+}
+
+bool
+CalcDistNoBCFunctor::TransformDelta(ExprTerm& term, Location loc, Location loc2)
+{
+    IntNum dist;
+    if (!CalcDistNoBC(loc, loc2, &dist))
+        return false;
+    // Change the term to an integer
+    term = ExprTerm(dist, term.getSource(), term.m_depth);
+    return true;
+}
+
+void
+yasm::SimplifyCalcDistNoBC(Expr& e, Diagnostic& diags)
+{
+    CalcDistNoBCFunctor functor;
+    e.Simplify(diags, functor);
+}
+
+bool
+SubstDistFunctor::TransformDelta(ExprTerm& term, Location loc, Location loc2)
+{
+    // Call higher-level callback
+    m_func(m_subst, loc, loc2);
+    // Change the term to an subst
+    term = ExprTerm(ExprTerm::Subst(m_subst), term.getSource(),
+                    term.m_depth);
+    m_subst++;
+    return true;
+}
 
 int
 yasm::SubstDist(Expr& e, Diagnostic& diags,
@@ -243,7 +253,7 @@ yasm::SubstDist(Expr& e, Diagnostic& diags,
                                           Location loc2)>& func)
 {
     SubstDistFunctor functor(func);
-    e.Simplify(diags, TR1::bind(&TransformDistBase, _1, _2, functor));
+    e.Simplify(diags, functor);
     return functor.m_subst;
 }
 

@@ -461,9 +461,7 @@ public:
     ///                         called as (Expr&, int pos)
     /// @param simplify_reg_mul simplify REG*1 identities
     template <typename T>
-    void Simplify(Diagnostic& diags,
-                  const T& func,
-                  bool simplify_reg_mul = true);
+    void Simplify(Diagnostic& diags, T& func, bool simplify_reg_mul = true);
 
     /// Extract the segment portion of an expression containing SEG:OFF,
     /// leaving the offset.
@@ -718,7 +716,7 @@ inline void Expr::Append(const ExprTerm& term)
 
 template <typename T>
 void
-Expr::Simplify(Diagnostic& diags, const T& func, bool simplify_reg_mul)
+Expr::Simplify(Diagnostic& diags, T& func, bool simplify_reg_mul)
 {
     TransformNeg();
 

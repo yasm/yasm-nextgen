@@ -244,7 +244,6 @@ public:
     int m_regmult[33];
 
 private:
-    void DistReg(Expr& e, int& pos, bool simplify_reg_mul);
     bool GetTermRegUsage(Expr& e,
                          int pos,
                          /*@null@*/ int* indexreg,
@@ -256,6 +255,20 @@ private:
     unsigned int m_bits;
     unsigned int m_addrsize;
     unsigned int m_vsib_mode;
+    Diagnostic& m_diags;
+};
+
+class X86DistRegFunctor
+{
+public:
+    X86DistRegFunctor(bool simplify_reg_mul, Diagnostic& diags)
+        : m_simplify_reg_mul(simplify_reg_mul), m_diags(diags)
+    {}
+
+    void operator() (Expr& e, int& pos);
+
+private:
+    bool m_simplify_reg_mul;
     Diagnostic& m_diags;
 };
 } // anonymous namespace
@@ -343,7 +356,7 @@ X86EAChecker::getReg(ExprTerm& term, int* regnum)
 // XXX: pos is taken by reference so we can update it.  This is somewhat
 //      underhanded.
 void
-X86EAChecker::DistReg(Expr& e, int& pos, bool simplify_reg_mul)
+X86DistRegFunctor::operator() (Expr& e, int& pos)
 {
     ExprTerms& terms = e.getTerms();
     ExprTerm& root = terms[pos];
@@ -423,7 +436,7 @@ X86EAChecker::DistReg(Expr& e, int& pos, bool simplify_reg_mul)
         // Level if child is also a MUL
         if (terms[n].isOp(Op::MUL))
         {
-            e.LevelOp(m_diags, simplify_reg_mul, n+2);
+            e.LevelOp(m_diags, m_simplify_reg_mul, n+2);
             // Leveling may have brought up terms, so we need to skip
             // all children explicitly.
             int childnum = terms[n+2].getNumChild();
@@ -543,9 +556,9 @@ X86EAChecker::GetRegUsage(Expr& e, /*@null@*/ int* indexreg, bool* ip_rel)
 {
     if (!ExpandEqu(e))
         return 2;
-    e.Simplify(m_diags, TR1::bind(&X86EAChecker::DistReg, this, _1, _2,
-                                  indexreg == 0),
-               indexreg == 0);
+
+    X86DistRegFunctor dist_reg(indexreg == 0, m_diags);
+    e.Simplify(m_diags, dist_reg, indexreg == 0);
 
     // Check for WRT rip first
     Expr wrt = e.ExtractWRT();
