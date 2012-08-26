@@ -28,7 +28,6 @@
 
 #include "yasmx/Object.h"
 
-#include <algorithm>
 #include <memory>
 
 #include <boost/pool/object_pool.hpp>
