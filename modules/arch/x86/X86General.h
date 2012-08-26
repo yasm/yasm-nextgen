@@ -73,7 +73,7 @@ enum X86GeneralPostOp
     X86_POSTOP_SIMM32_AVAIL
 };
 
-class YASM_LIB_EXPORT X86General : public Bytecode::Contents
+class YASM_STD_EXPORT X86General : public Bytecode::Contents
 {
 public:
 
