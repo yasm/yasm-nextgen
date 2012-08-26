@@ -241,6 +241,15 @@ ElfSection::Write(llvm::raw_ostream& os, Bytes& scratch) const
     return scratch.size();
 }
 
+static void
+NoAddSpan(Bytecode& bc,
+          int id,
+          const Value& value,
+          long neg_thres,
+          long pos_thres)
+{
+}
+
 std::auto_ptr<Section>
 ElfSection::CreateSection(const StringTable& shstrtab) const
 {
@@ -260,7 +269,7 @@ ElfSection::CreateSection(const StringTable& shstrtab) const
         Bytecode& gap =
             section->AppendGap(m_size.getUInt(), SourceLocation());
         Diagnostic nodiags(0);
-        gap.CalcLen(0, nodiags);    // force length calculation of gap
+        gap.CalcLen(NoAddSpan, nodiags); // force length calculation
     }
 
     return section;

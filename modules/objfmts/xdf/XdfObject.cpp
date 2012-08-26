@@ -466,6 +466,15 @@ private:
 };
 } // anonymous namespace
 
+static void
+NoAddSpan(Bytecode& bc,
+          int id,
+          const Value& value,
+          long neg_thres,
+          long pos_thres)
+{
+}
+
 bool
 XdfObject::Read(SourceManager& sm, Diagnostic& diags)
 {
@@ -536,7 +545,7 @@ XdfObject::Read(SourceManager& sm, Diagnostic& diags)
             Bytecode& gap =
                 section->AppendGap(xsect->size, SourceLocation());
             Diagnostic nodiags(0);
-            gap.CalcLen(0, nodiags);    // force length calculation of gap
+            gap.CalcLen(NoAddSpan, nodiags); // force length calculation
         }
         else
         {

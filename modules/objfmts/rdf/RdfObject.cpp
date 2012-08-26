@@ -676,6 +676,15 @@ RdfObject::Taste(const llvm::MemoryBuffer& in,
     return true;
 }
 
+static void
+NoAddSpan(Bytecode& bc,
+          int id,
+          const Value& value,
+          long neg_thres,
+          long pos_thres)
+{
+}
+
 bool
 RdfObject::Read(SourceManager& sm, Diagnostic& diags)
 {
@@ -736,7 +745,7 @@ RdfObject::Read(SourceManager& sm, Diagnostic& diags)
         {
             Bytecode& gap = section->AppendGap(size, SourceLocation());
             Diagnostic nodiags(0);
-            gap.CalcLen(0, nodiags);    // force length calculation of gap
+            gap.CalcLen(NoAddSpan, nodiags); // force length calculation
         }
         else
         {
@@ -873,7 +882,7 @@ RdfObject::Read(SourceManager& sm, Diagnostic& diags)
                 Bytecode& gap =
                     section->AppendGap(size, SourceLocation());
                 Diagnostic nodiags(0);
-                gap.CalcLen(0, nodiags);    // force length calculation of gap
+                gap.CalcLen(NoAddSpan, nodiags); // force length calculation
 
                 // Create symbol for section start (used for relocations)
                 SymbolRef sym = m_object.AddNonTableSymbol(".bss");
