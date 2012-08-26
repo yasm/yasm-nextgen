@@ -377,6 +377,9 @@ if (MSVC)
 
    # Enable std::min and std::max
    ADD_DEFINITIONS(-DNOMINMAX)
+
+   # Need 6 parameter std::function
+   ADD_DEFINITIONS(-D_VARIADIC_MAX=6)
 endif(MSVC)
 
 if (CMAKE_COMPILER_IS_GNUCXX)
