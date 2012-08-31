@@ -182,7 +182,7 @@ add_group("signed-overflow")
 add_fatal("fatal_too_many_errors", "too many errors emitted, stopping now")
 
 # Frontend
-add_fatal("fatal_module_load", "could not load %0 '%1")
+add_fatal("fatal_module_load", "could not load %0 '%1'")
 add_fatal("fatal_module_combo", "'%1' is not a valid %0 for %2 '%3'")
 add_fatal("fatal_objfmt_machine_mismatch",
           "object format '%0' does not support architecture '%1' machine '%2'")
