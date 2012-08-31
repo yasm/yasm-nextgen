@@ -352,9 +352,9 @@ enum ElfRelocationType_x86_64
     R_X86_64_GOT32 = 3,         // word32, G + A
     R_X86_64_PLT32 = 4,         // word32, L + A - P
     R_X86_64_COPY = 5,          // none
-    R_X86_64_GLOB_DAT = 6,      // word64, S, set GOT entry to data address
-    R_X86_64_JMP_SLOT = 7,      // word64, S, set GOT entry to code address
-    R_X86_64_RELATIVE = 8,      // word64, B + A
+    R_X86_64_GLOB_DAT = 6,      // wordclass, S, set GOT entry to data address
+    R_X86_64_JMP_SLOT = 7,      // wordclass, S, set GOT entry to code address
+    R_X86_64_RELATIVE = 8,      // wordclass, B + A
     R_X86_64_GOTPCREL = 9,      // word32, G + GOT + A - P
     R_X86_64_32 = 10,           // word32 (zero extend), S + A
     R_X86_64_32S = 11,          // word32 (sign extend), S + A
@@ -380,7 +380,9 @@ enum ElfRelocationType_x86_64
     R_X86_64_PLTOFF64 = 31,     // word64, GOT relative offset to PLT entry
     R_X86_64_GOTPC32_TLSDESC = 34, // GOT offset for TLS descriptor
     R_X86_64_TLSDESC_CALL = 35, // Marker for call through TLS descriptor
-    R_X86_64_TLSDESC = 36       // TLS descriptor
+    R_X86_64_TLSDESC = 36,      // TLS descriptor
+    R_X86_64_IRELATIVE = 37,    // wordclass, indirect (B + A)
+    R_X86_64_RELATIVE64 = 38    // word64, B + A
 };
 
 typedef std::vector<SymbolRef> ElfSymtab;

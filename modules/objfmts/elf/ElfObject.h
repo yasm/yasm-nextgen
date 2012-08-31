@@ -232,6 +232,32 @@ public:
                       /*@out@*/ std::string* machine);
 };
 
+class YASM_STD_EXPORT Elfx32Object : public ElfObject
+{
+public:
+    Elfx32Object(const ObjectFormatModule& module, Object& object)
+        : ElfObject(module, object, 32)
+    {}
+    ~Elfx32Object();
+
+    static llvm::StringRef getName() { return "ELF (x32)"; }
+    static llvm::StringRef getKeyword() { return "elfx32"; }
+    static llvm::StringRef getExtension() { return ElfObject::getExtension(); }
+    static unsigned int getDefaultX86ModeBits() { return 64; }
+
+    static llvm::StringRef getDefaultDebugFormatKeyword()
+    { return ElfObject::getDefaultDebugFormatKeyword(); }
+    static std::vector<llvm::StringRef> getDebugFormatKeywords()
+    { return ElfObject::getDebugFormatKeywords(); }
+
+    static bool isOkObject(Object& object);
+
+    // For tasting, let main elf handle it.
+    static bool Taste(const llvm::MemoryBuffer& in,
+                      /*@out@*/ std::string* arch_keyword,
+                      /*@out@*/ std::string* machine);
+};
+
 }} // namespace yasm::objfmt
 
 #endif

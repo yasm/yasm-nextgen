@@ -156,37 +156,14 @@ Elf64Object::isOkObject(Object& object)
     return isOkElfMachine(*object.getArch(), ELFCLASS64);
 }
 
-static bool
-TasteCommon(const llvm::MemoryBuffer& in,
-            /*@out@*/ std::string* arch_keyword,
-            /*@out@*/ std::string* machine,
-            ElfClass cls)
+Elfx32Object::~Elfx32Object()
 {
-    ElfConfig config;
+}
 
-    // Read header
-    if (!config.ReadProgramHeader(in))
-        return false;
-
-    // Check class
-    if (config.cls != cls)
-        return false;
-
-    // for now, just handle this here
-    switch (config.machine_type)
-    {
-        case EM_386:
-            arch_keyword->assign("x86");
-            machine->assign("x86");
-            break;
-        case EM_X86_64:
-            arch_keyword->assign("x86");
-            machine->assign("amd64");
-            break;
-        default:
-            return false;
-    }
-    return true;
+bool
+Elfx32Object::isOkObject(Object& object)
+{
+    return isOkElfMachine(*object.getArch(), ELFCLASS32);
 }
 
 bool
@@ -194,7 +171,18 @@ Elf32Object::Taste(const llvm::MemoryBuffer& in,
                    /*@out@*/ std::string* arch_keyword,
                    /*@out@*/ std::string* machine)
 {
-    return TasteCommon(in, arch_keyword, machine, ELFCLASS32);
+    ElfConfig config;
+    if (!config.ReadProgramHeader(in))
+        return false;
+    if (config.cls != ELFCLASS32)
+        return false;
+    if (config.machine_type == EM_386)
+    {
+        arch_keyword->assign("x86");
+        machine->assign("x86");
+        return true;
+    }
+    return false;
 }
 
 bool
@@ -202,7 +190,37 @@ Elf64Object::Taste(const llvm::MemoryBuffer& in,
                    /*@out@*/ std::string* arch_keyword,
                    /*@out@*/ std::string* machine)
 {
-    return TasteCommon(in, arch_keyword, machine, ELFCLASS64);
+    ElfConfig config;
+    if (!config.ReadProgramHeader(in))
+        return false;
+    if (config.cls != ELFCLASS64)
+        return false;
+    if (config.machine_type == EM_X86_64)
+    {
+        arch_keyword->assign("x86");
+        machine->assign("amd64");
+        return true;
+    }
+    return false;
+}
+
+bool
+Elfx32Object::Taste(const llvm::MemoryBuffer& in,
+                    /*@out@*/ std::string* arch_keyword,
+                    /*@out@*/ std::string* machine)
+{
+    ElfConfig config;
+    if (!config.ReadProgramHeader(in))
+        return false;
+    if (config.cls != ELFCLASS32)
+        return false;
+    if (config.machine_type == EM_X86_64)
+    {
+        arch_keyword->assign("x86");
+        machine->assign("amd64");
+        return true;
+    }
+    return false;
 }
 
 static inline bool
@@ -2090,4 +2108,6 @@ yasm_objfmt_elf_DoRegister()
                    ObjectFormatModuleImpl<Elf32Object> >("elf32");
     RegisterModule<ObjectFormatModule,
                    ObjectFormatModuleImpl<Elf64Object> >("elf64");
+    RegisterModule<ObjectFormatModule,
+                   ObjectFormatModuleImpl<Elfx32Object> >("elfx32");
 }

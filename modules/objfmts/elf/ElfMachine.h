@@ -140,9 +140,13 @@ bool ElfMatch_x86_x86(llvm::StringRef arch_keyword,
 bool ElfMatch_x86_amd64(llvm::StringRef arch_keyword,
                         llvm::StringRef arch_machine,
                         ElfClass cls);
+bool ElfMatch_x86_x32(llvm::StringRef arch_keyword,
+                      llvm::StringRef arch_machine,
+                      ElfClass cls);
 
 std::auto_ptr<ElfMachine> ElfCreate_x86_x86();
 std::auto_ptr<ElfMachine> ElfCreate_x86_amd64();
+std::auto_ptr<ElfMachine> ElfCreate_x86_x32();
 } // namespace impl
 
 }} // namespace yasm::objfmt
