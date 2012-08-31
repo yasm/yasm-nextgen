@@ -121,6 +121,8 @@ LoadModule(llvm::StringRef keyword)
 {
     impl::ModuleFactory::BASE_CREATE_FN create =
         impl::ModuleFactory::Instance().getCreateFn(T::module_type, keyword);
+    if (!create)
+        return std::auto_ptr<T>(0);
     return std::auto_ptr<T>(static_cast<T*>(create()));
 }
 
