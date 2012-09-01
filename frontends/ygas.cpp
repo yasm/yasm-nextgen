@@ -66,9 +66,10 @@
 // Preprocess-only buffer size
 #define PREPROC_BUF_SIZE    16384
 
+using namespace yasm;
 namespace cl = llvm::cl;
 
-static std::auto_ptr<llvm::raw_ostream> errfile;
+static std::auto_ptr<raw_ostream> errfile;
 
 // version message
 static const char* full_version =
@@ -115,17 +116,17 @@ static cl::list<std::string> ignored_D("D",
     cl::Hidden);
 
 // -dump-object
-static llvm::cl::opt<yasm::Assembler::ObjectDumpTime> dump_object("dump-object",
-    llvm::cl::desc("Dump object in XML after this phase:"),
-    llvm::cl::values(
-        clEnumValN(yasm::Assembler::DUMP_NEVER, "never", "never dump"),
-        clEnumValN(yasm::Assembler::DUMP_AFTER_PARSE, "parsed",
+static cl::opt<Assembler::ObjectDumpTime> dump_object("dump-object",
+    cl::desc("Dump object in XML after this phase:"),
+    cl::values(
+        clEnumValN(Assembler::DUMP_NEVER, "never", "never dump"),
+        clEnumValN(Assembler::DUMP_AFTER_PARSE, "parsed",
                    "after parse phase"),
-        clEnumValN(yasm::Assembler::DUMP_AFTER_FINALIZE, "finalized",
+        clEnumValN(Assembler::DUMP_AFTER_FINALIZE, "finalized",
                    "after finalization"),
-        clEnumValN(yasm::Assembler::DUMP_AFTER_OPTIMIZE, "optimized",
+        clEnumValN(Assembler::DUMP_AFTER_OPTIMIZE, "optimized",
                    "after optimization"),
-        clEnumValN(yasm::Assembler::DUMP_AFTER_OUTPUT, "output",
+        clEnumValN(Assembler::DUMP_AFTER_OUTPUT, "output",
                    "after output"),
         clEnumValEnd));
 
@@ -205,11 +206,11 @@ static cl::list<bool> enable_warnings("warn",
 static cl::list<std::string> unknown_options(cl::Sink);
 
 static void
-ApplyWarningSettings(yasm::DiagnosticsEngine& diags)
+ApplyWarningSettings(DiagnosticsEngine& diags)
 {
     // Disable init-nobits and uninit-contents by default.
-    diags.setDiagnosticGroupMapping("init-nobits", yasm::diag::MAP_IGNORE);
-    diags.setDiagnosticGroupMapping("uninit-contents", yasm::diag::MAP_IGNORE);
+    diags.setDiagnosticGroupMapping("init-nobits", diag::MAP_IGNORE);
+    diags.setDiagnosticGroupMapping("uninit-contents", diag::MAP_IGNORE);
 
     // Walk through inhibit_warnings, fatal_warnings, enable_warnings, and
     // no_signed_overflow in parallel, ordering by command line argument
@@ -256,7 +257,7 @@ ApplyWarningSettings(yasm::DiagnosticsEngine& diags)
             diags.setIgnoreAllWarnings(false);
             diags.setWarningsAsErrors(false);
             diags.setDiagnosticGroupMapping("signed-overflow",
-                                            yasm::diag::MAP_WARNING);
+                                            diag::MAP_WARNING);
         }
         else if (fatal_pos != 0 &&
                  (enable_pos == 0 || fatal_pos < enable_pos) &&
@@ -275,7 +276,7 @@ ApplyWarningSettings(yasm::DiagnosticsEngine& diags)
             // Handle signed option
             ++signed_num;
             diags.setDiagnosticGroupMapping("signed-overflow",
-                                            yasm::diag::MAP_IGNORE);
+                                            diag::MAP_IGNORE);
         }
         else
             break; // we're done with the list
@@ -322,9 +323,9 @@ GetBitsSetting()
 }
 
 static void
-ConfigureObject(yasm::Object& object)
+ConfigureObject(Object& object)
 {
-    yasm::Object::Config& config = object.getConfig();
+    Object::Config& config = object.getConfig();
 
     // Walk through execstack and noexecstack in parallel, ordering by command
     // line argument position.
@@ -361,7 +362,7 @@ ConfigureObject(yasm::Object& object)
 }
 
 static int
-do_assemble(yasm::SourceManager& source_mgr, yasm::DiagnosticsEngine& diags)
+do_assemble(SourceManager& source_mgr, DiagnosticsEngine& diags)
 {
     // Apply warning settings
     ApplyWarningSettings(diags);
@@ -369,10 +370,10 @@ do_assemble(yasm::SourceManager& source_mgr, yasm::DiagnosticsEngine& diags)
     // Determine objfmt_bits based on -32 and -64 options
     std::string objfmt_bits = GetBitsSetting();
 
-    yasm::FileManager& file_mgr = source_mgr.getFileManager();
-    yasm::Assembler assembler("x86", YGAS_OBJFMT_BASE + objfmt_bits, diags,
-                              dump_object);
-    yasm::HeaderSearch headers(file_mgr);
+    FileManager& file_mgr = source_mgr.getFileManager();
+    Assembler assembler("x86", YGAS_OBJFMT_BASE + objfmt_bits, diags,
+                        dump_object);
+    HeaderSearch headers(file_mgr);
 
     if (diags.hasFatalErrorOccurred())
         return EXIT_FAILURE;
@@ -398,10 +399,10 @@ do_assemble(yasm::SourceManager& source_mgr, yasm::DiagnosticsEngine& diags)
     // open the input file or STDIN (for filename of "-")
     if (in_filename == "-")
     {
-        llvm::OwningPtr<llvm::MemoryBuffer> my_stdin;
-        if (llvm::error_code err = llvm::MemoryBuffer::getSTDIN(my_stdin))
+        OwningPtr<MemoryBuffer> my_stdin;
+        if (llvm::error_code err = MemoryBuffer::getSTDIN(my_stdin))
         {
-            diags.Report(yasm::SourceLocation(), yasm::diag::fatal_file_open)
+            diags.Report(SourceLocation(), diag::fatal_file_open)
                 << in_filename << err.message();
             return EXIT_FAILURE;
         }
@@ -409,10 +410,10 @@ do_assemble(yasm::SourceManager& source_mgr, yasm::DiagnosticsEngine& diags)
     }
     else
     {
-        const yasm::FileEntry* in = file_mgr.getFile(in_filename);
+        const FileEntry* in = file_mgr.getFile(in_filename);
         if (!in)
         {
-            diags.Report(yasm::SourceLocation(), yasm::diag::fatal_file_open)
+            diags.Report(SourceLocation(), diag::fatal_file_open)
                 << in_filename;
             return EXIT_FAILURE;
         }
@@ -430,17 +431,17 @@ do_assemble(yasm::SourceManager& source_mgr, yasm::DiagnosticsEngine& diags)
     for (std::vector<std::string>::const_iterator i=defsym.begin(),
          end=defsym.end(); i != end; ++i)
     {
-        llvm::StringRef str(*i);
+        StringRef str(*i);
         size_t equalpos = str.find('=');
-        if (equalpos == llvm::StringRef::npos)
+        if (equalpos == StringRef::npos)
         {
-            diags.Report(yasm::diag::fatal_bad_defsym) << str;
+            diags.Report(diag::fatal_bad_defsym) << str;
             continue;
         }
-        llvm::StringRef name = str.slice(0, equalpos);
-        llvm::StringRef vstr = str.slice(equalpos+1, llvm::StringRef::npos);
+        StringRef name = str.slice(0, equalpos);
+        StringRef vstr = str.slice(equalpos+1, StringRef::npos);
 
-        yasm::IntNum value;
+        IntNum value;
         if (!vstr.empty())
         {
             // determine radix
@@ -479,14 +480,14 @@ do_assemble(yasm::SourceManager& source_mgr, yasm::DiagnosticsEngine& diags)
             }
             if (ptr != end)
             {
-                diags.Report(yasm::diag::fatal_bad_defsym) << name;
+                diags.Report(diag::fatal_bad_defsym) << name;
                 continue;
             }
             value.setStr(vstr, radix);
         }
 
         // define equ
-        assembler.getObject()->getSymbol(name)->DefineEqu(yasm::Expr(value));
+        assembler.getObject()->getSymbol(name)->DefineEqu(Expr(value));
     }
 
     if (diags.hasFatalErrorOccurred())
@@ -504,11 +505,11 @@ do_assemble(yasm::SourceManager& source_mgr, yasm::DiagnosticsEngine& diags)
 
     // open the object file for output
     std::string err;
-    llvm::raw_fd_ostream out(assembler.getObjectFilename().str().c_str(),
-                             err, llvm::raw_fd_ostream::F_Binary);
+    raw_fd_ostream out(assembler.getObjectFilename().str().c_str(),
+                       err, raw_fd_ostream::F_Binary);
     if (!err.empty())
     {
-        diags.Report(yasm::SourceLocation(), yasm::diag::err_cannot_open_file)
+        diags.Report(SourceLocation(), diag::err_cannot_open_file)
             << obj_filename << err;
         return EXIT_FAILURE;
     }
@@ -545,29 +546,28 @@ main(int argc, char* argv[])
         return EXIT_SUCCESS;
     }
 
-    yasm::DiagnosticOptions diag_opts;
+    DiagnosticOptions diag_opts;
     diag_opts.ShowOptionNames = 1;
     diag_opts.ShowSourceRanges = 1;
-    yasm::TextDiagnosticPrinter diag_printer(llvm::errs(), diag_opts);
-    llvm::IntrusiveRefCntPtr<yasm::DiagnosticIDs>
-        diagids(new yasm::DiagnosticIDs);
-    yasm::DiagnosticsEngine diags(diagids, &diag_printer, false);
-    yasm::FileSystemOptions opts;
-    yasm::FileManager file_mgr(opts);
-    yasm::SourceManager source_mgr(diags, file_mgr);
+    TextDiagnosticPrinter diag_printer(llvm::errs(), diag_opts);
+    IntrusiveRefCntPtr<DiagnosticIDs> diagids(new DiagnosticIDs);
+    DiagnosticsEngine diags(diagids, &diag_printer, false);
+    FileSystemOptions opts;
+    FileManager file_mgr(opts);
+    SourceManager source_mgr(diags, file_mgr);
     diags.setSourceManager(&source_mgr);
     diag_printer.setPrefix("ygas");
 
     for (std::vector<std::string>::const_iterator i=unknown_options.begin(),
          end=unknown_options.end(); i != end; ++i)
     {
-        diags.Report(yasm::diag::warn_unknown_command_line_option) << *i;
+        diags.Report(diag::warn_unknown_command_line_option) << *i;
     }
 
     // Load standard modules
-    if (!yasm::LoadStandardPlugins())
+    if (!LoadStandardPlugins())
     {
-        diags.Report(yasm::diag::fatal_standard_modules);
+        diags.Report(diag::fatal_standard_modules);
         return EXIT_FAILURE;
     }
 
@@ -576,8 +576,8 @@ main(int argc, char* argv[])
     for (std::vector<std::string>::const_iterator i=plugin_names.begin(),
          end=plugin_names.end(); i != end; ++i)
     {
-        if (!yasm::LoadPlugin(*i))
-            diags.Report(yasm::diag::warn_plugin_load) << *i;
+        if (!LoadPlugin(*i))
+            diags.Report(diag::warn_plugin_load) << *i;
     }
 #endif
 

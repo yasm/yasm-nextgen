@@ -56,6 +56,8 @@
 
 #include "frontends/license.cpp"
 
+using namespace yasm;
+using llvm::format;
 namespace cl = llvm::cl;
 
 // version message
@@ -171,47 +173,47 @@ static cl::alias show_all_headers_long("all-headers",
 static void
 PrintListKeywordDesc(const std::string& name, const std::string& keyword)
 {
-    llvm::outs() << llvm::format("%-12s", keyword.c_str()) << name << '\n';
+    llvm::outs() << format("%-12s", keyword.c_str()) << name << '\n';
 }
 
 template <typename T>
 static void
 list_module()
 {
-    yasm::ModuleNames list = yasm::getModules<T>();
-    for (yasm::ModuleNames::iterator i=list.begin(), end=list.end();
+    ModuleNames list = getModules<T>();
+    for (ModuleNames::iterator i=list.begin(), end=list.end();
          i != end; ++i)
     {
-        std::auto_ptr<T> obj = yasm::LoadModule<T>(*i);
+        std::auto_ptr<T> obj = LoadModule<T>(*i);
         PrintListKeywordDesc(obj->getName(), *i);
     }
 }
 
 static void
-DumpSectionHeaders(const yasm::Object& object)
+DumpSectionHeaders(const Object& object)
 {
-    llvm::raw_ostream& os = llvm::outs();
+    raw_ostream& os = llvm::outs();
     os << "Sections:\n"
        << "Idx Name          Size      ";
     unsigned int bits = 64; // FIXME
-    os << llvm::format("%-*s", bits/4, (const char*)"VMA") << "  "
-       << llvm::format("%-*s", bits/4, (const char*)"LMA") << "  "
+    os << format("%-*s", bits/4, (const char*)"VMA") << "  "
+       << format("%-*s", bits/4, (const char*)"LMA") << "  "
        << "File off  Algn\n";
 
     unsigned int idx = 0;
-    for (yasm::Object::const_section_iterator sect=object.sections_begin(),
+    for (Object::const_section_iterator sect=object.sections_begin(),
          end=object.sections_end(); sect != end; ++sect, ++idx)
     {
-        os << llvm::format("%3d", idx) << ' '
-           << llvm::format("%-13s", sect->getName().str().c_str()) << ' ';
-        yasm::IntNum(sect->bytecodes_back().getNextOffset())
+        os << format("%3d", idx) << ' '
+           << format("%-13s", sect->getName().str().c_str()) << ' ';
+        IntNum(sect->bytecodes_back().getNextOffset())
             .Print(os, 16, true, false, 32);
         os << "  ";
         sect->getVMA().Print(os, 16, true, false, bits);
         os << "  ";
         sect->getLMA().Print(os, 16, true, false, bits);
         os << "  ";
-        yasm::IntNum(sect->getFilePos()).Print(os, 16, true, false, 32);
+        IntNum(sect->getFilePos()).Print(os, 16, true, false, 32);
         os << "  "
            << sect->getAlign()
            << '\n';
@@ -219,24 +221,24 @@ DumpSectionHeaders(const yasm::Object& object)
 }
 
 static void
-DumpSymbols(const yasm::Object& object)
+DumpSymbols(const Object& object)
 {
-    llvm::raw_ostream& os = llvm::outs();
+    raw_ostream& os = llvm::outs();
     os << "SYMBOL TABLE:\n";
     unsigned int bits = 64; // FIXME
-    for (yasm::Object::const_symbol_iterator sym=object.symbols_begin(),
+    for (Object::const_symbol_iterator sym=object.symbols_begin(),
          end=object.symbols_end(); sym != end; ++sym)
     {
-        yasm::Location loc;
+        Location loc;
         bool is_label = sym->getLabel(&loc);
-        const yasm::Expr* equ = sym->getEqu();
+        const Expr* equ = sym->getEqu();
 
         if (is_label)
-            yasm::IntNum(loc.getOffset()).Print(os, 16, true, false, bits);
+            IntNum(loc.getOffset()).Print(os, 16, true, false, bits);
         else if (equ)
             equ->Print(os, 16);
         else
-            yasm::IntNum(0).Print(os, 16, true, false, bits);
+            IntNum(0).Print(os, 16, true, false, bits);
 
         os << "  ";
         // TODO: symbol flags
@@ -245,9 +247,9 @@ DumpSymbols(const yasm::Object& object)
             os << loc.bc->getContainer()->getSection()->getName() << '\t';
         else if (sym->getEqu())
             os << "*ABS*\t";
-        else if ((vis & yasm::Symbol::EXTERN) != 0)
+        else if ((vis & Symbol::EXTERN) != 0)
             os << "*UND*\t";
-        else if ((vis & yasm::Symbol::COMMON) != 0)
+        else if ((vis & Symbol::COMMON) != 0)
             os << "*COM*\t";
         os << sym->getName()
            << '\n';
@@ -255,28 +257,28 @@ DumpSymbols(const yasm::Object& object)
 }
 
 static void
-DumpRelocs(const yasm::Object& object)
+DumpRelocs(const Object& object)
 {
-    llvm::raw_ostream& os = llvm::outs();
+    raw_ostream& os = llvm::outs();
     unsigned int bits = 64; // FIXME
 
-    for (yasm::Object::const_section_iterator sect=object.sections_begin(),
+    for (Object::const_section_iterator sect=object.sections_begin(),
          end=object.sections_end(); sect != end; ++sect)
     {
         if (sect->getRelocs().empty())
             continue;
 
         os << "RELOCATION RECORDS FOR [" << sect->getName() << "]:\n"
-           << llvm::format("%-*s", bits/4, (const char*)"OFFSET")
+           << format("%-*s", bits/4, (const char*)"OFFSET")
            << " TYPE              VALUE\n";
 
-        for (yasm::Section::const_reloc_iterator reloc=sect->relocs_begin(),
+        for (Section::const_reloc_iterator reloc=sect->relocs_begin(),
              endr=sect->relocs_end(); reloc != endr; ++reloc)
         {
             (sect->getVMA()+reloc->getAddress())
                 .Print(os, 16, true, false, bits);
             os << ' ';
-            os << llvm::format("%-16s", reloc->getTypeName().c_str()) << "  ";
+            os << format("%-16s", reloc->getTypeName().c_str()) << "  ";
             reloc->getValue().Print(os, 16);
             os << '\n';
         }
@@ -285,12 +287,12 @@ DumpRelocs(const yasm::Object& object)
 }
 
 static void
-DumpContentsLine(const yasm::IntNum& addr,
+DumpContentsLine(const IntNum& addr,
                  const unsigned char* data,
                  int len,
                  int addr_bits)
 {
-    llvm::raw_ostream& os = llvm::outs();
+    raw_ostream& os = llvm::outs();
 
     // address
     os << ' ';
@@ -302,7 +304,7 @@ DumpContentsLine(const yasm::IntNum& addr,
         if ((i & 3) == 0)
             os << ' ';
         if (i<len)
-            os << llvm::format("%02x", static_cast<unsigned int>(data[i]));
+            os << format("%02x", static_cast<unsigned int>(data[i]));
         else
             os << "  ";
     }
@@ -323,11 +325,11 @@ DumpContentsLine(const yasm::IntNum& addr,
 }
 
 static void
-DumpContents(const yasm::Object& object)
+DumpContents(const Object& object)
 {
-    llvm::raw_ostream& os = llvm::outs();
+    raw_ostream& os = llvm::outs();
 
-    for (yasm::Object::const_section_iterator sect=object.sections_begin(),
+    for (Object::const_section_iterator sect=object.sections_begin(),
          end=object.sections_end(); sect != end; ++sect)
     {
         if (sect->isBSS())
@@ -338,7 +340,7 @@ DumpContents(const yasm::Object& object)
             continue;   // empty
 
         // figure out how many hex digits we should have for the address
-        yasm::IntNum last_addr = sect->getVMA() + size;
+        IntNum last_addr = sect->getVMA() + size;
         unsigned int addr_bits = 0;
         while (!last_addr.isZero())
         {
@@ -352,13 +354,13 @@ DumpContents(const yasm::Object& object)
 
         unsigned char line[16];
         int line_pos = 0;
-        yasm::IntNum addr = sect->getVMA();
+        IntNum addr = sect->getVMA();
 
-        for (yasm::Section::const_bc_iterator bc=sect->bytecodes_begin(),
+        for (Section::const_bc_iterator bc=sect->bytecodes_begin(),
              endbc=sect->bytecodes_end(); bc != endbc; ++bc)
         {
             // XXX: only outputs fixed portions
-            const yasm::Bytes& fixed = bc->getFixed();
+            const Bytes& fixed = bc->getFixed();
             long fixed_pos = 0;
             long fixed_size = fixed.size();
             while (fixed_pos < fixed_size)
@@ -388,18 +390,18 @@ DumpContents(const yasm::Object& object)
 
 static int
 DoDump(const std::string& in_filename,
-       yasm::SourceManager& source_mgr,
-       yasm::DiagnosticsEngine& diags)
+       SourceManager& source_mgr,
+       DiagnosticsEngine& diags)
 {
-    yasm::FileManager& file_mgr = source_mgr.getFileManager();
+    FileManager& file_mgr = source_mgr.getFileManager();
 
     // open the input file or STDIN (for filename of "-")
     if (in_filename == "-")
     {
-        llvm::OwningPtr<llvm::MemoryBuffer> my_stdin;
-        if (llvm::error_code err = llvm::MemoryBuffer::getSTDIN(my_stdin))
+        OwningPtr<MemoryBuffer> my_stdin;
+        if (llvm::error_code err = MemoryBuffer::getSTDIN(my_stdin))
         {
-            diags.Report(yasm::SourceLocation(), yasm::diag::fatal_file_open)
+            diags.Report(SourceLocation(), diag::fatal_file_open)
                 << in_filename << err.message();
             return EXIT_FAILURE;
         }
@@ -407,47 +409,46 @@ DoDump(const std::string& in_filename,
     }
     else
     {
-        const yasm::FileEntry* in = file_mgr.getFile(in_filename);
+        const FileEntry* in = file_mgr.getFile(in_filename);
         if (!in)
         {
-            diags.Report(yasm::SourceLocation(), yasm::diag::err_file_open)
+            diags.Report(SourceLocation(), diag::err_file_open)
                 << in_filename;
         }
         source_mgr.createMainFileID(in);
     }
 
-    const llvm::MemoryBuffer* in_file =
+    const MemoryBuffer* in_file =
         source_mgr.getBuffer(source_mgr.getMainFileID());
-    yasm::SourceLocation sloc =
+    SourceLocation sloc =
         source_mgr.getLocForStartOfFile(source_mgr.getMainFileID());
 
-    std::auto_ptr<yasm::ObjectFormatModule> objfmt_module(0);
+    std::auto_ptr<ObjectFormatModule> objfmt_module(0);
     std::string arch_keyword, machine;
 
     if (!objfmt_keyword.empty())
     {
-        objfmt_keyword = llvm::StringRef(objfmt_keyword).lower();
-        if (!yasm::isModule<yasm::ObjectFormatModule>(objfmt_keyword))
+        objfmt_keyword = StringRef(objfmt_keyword).lower();
+        if (!isModule<ObjectFormatModule>(objfmt_keyword))
         {
-            diags.Report(sloc, yasm::diag::err_unrecognized_object_format)
+            diags.Report(sloc, diag::err_unrecognized_object_format)
                 << objfmt_keyword;
             return EXIT_FAILURE;
         }
 
         // Object format forced by user
-        objfmt_module =
-            yasm::LoadModule<yasm::ObjectFormatModule>(objfmt_keyword);
+        objfmt_module = LoadModule<ObjectFormatModule>(objfmt_keyword);
 
         if (objfmt_module.get() == 0)
         {
-            diags.Report(sloc, yasm::diag::fatal_module_load)
+            diags.Report(sloc, diag::fatal_module_load)
                 << "object format" << objfmt_keyword;
             return EXIT_FAILURE;
         }
 
         if (!objfmt_module->Taste(*in_file, &arch_keyword, &machine))
         {
-            diags.Report(sloc, yasm::diag::err_unrecognized_object_file)
+            diags.Report(sloc, diag::err_unrecognized_object_file)
                 << objfmt_module->getKeyword();
             return EXIT_FAILURE;
         }
@@ -455,51 +456,51 @@ DoDump(const std::string& in_filename,
     else
     {
         // Need to loop through available object formats, and taste each one
-        yasm::ModuleNames list = yasm::getModules<yasm::ObjectFormatModule>();
-        yasm::ModuleNames::iterator i=list.begin(), end=list.end();
+        ModuleNames list = getModules<ObjectFormatModule>();
+        ModuleNames::iterator i=list.begin(), end=list.end();
         for (; i != end; ++i)
         {
-            objfmt_module = yasm::LoadModule<yasm::ObjectFormatModule>(*i);
+            objfmt_module = LoadModule<ObjectFormatModule>(*i);
             if (objfmt_module->Taste(*in_file, &arch_keyword, &machine))
                 break;
         }
         if (i == end)
         {
-            diags.Report(sloc, yasm::diag::err_unrecognized_file_format);
+            diags.Report(sloc, diag::err_unrecognized_file_format);
             return EXIT_FAILURE;
         }
     }
 
-    std::auto_ptr<yasm::ArchModule> arch_module =
-        yasm::LoadModule<yasm::ArchModule>(arch_keyword);
+    std::auto_ptr<ArchModule> arch_module =
+        LoadModule<ArchModule>(arch_keyword);
     if (arch_module.get() == 0)
     {
-        diags.Report(sloc, yasm::diag::fatal_module_load)
+        diags.Report(sloc, diag::fatal_module_load)
             << "architecture" << arch_keyword;
         return EXIT_FAILURE;
     }
 
-    std::auto_ptr<yasm::Arch> arch = arch_module->Create();
+    std::auto_ptr<Arch> arch = arch_module->Create();
     if (!arch->setMachine(machine))
     {
-        diags.Report(sloc, yasm::diag::fatal_module_combo)
+        diags.Report(sloc, diag::fatal_module_combo)
             << "machine" << machine
             << "architecture" << arch_module->getKeyword();
         return EXIT_FAILURE;
     }
 
-    yasm::Object object("", in_filename, arch.get());
+    Object object("", in_filename, arch.get());
 
     if (!objfmt_module->isOkObject(object))
     {
-        diags.Report(sloc, yasm::diag::fatal_objfmt_machine_mismatch)
+        diags.Report(sloc, diag::fatal_objfmt_machine_mismatch)
             << objfmt_module->getKeyword()
             << arch_module->getKeyword()
             << arch->getMachine();
         return EXIT_FAILURE;
     }
 
-    std::auto_ptr<yasm::ObjectFormat> objfmt = objfmt_module->Create(object);
+    std::auto_ptr<ObjectFormat> objfmt = objfmt_module->Create(object);
     if (!objfmt->Read(source_mgr, diags))
         return EXIT_FAILURE;
 
@@ -538,24 +539,23 @@ main(int argc, char* argv[])
     if (show_info)
     {
         llvm::outs() << full_version << '\n';
-        list_module<yasm::ObjectFormatModule>();
+        list_module<ObjectFormatModule>();
         return EXIT_SUCCESS;
     }
 
-    yasm::OffsetDiagnosticPrinter diag_printer(llvm::errs());
-    llvm::IntrusiveRefCntPtr<yasm::DiagnosticIDs>
-        diagids(new yasm::DiagnosticIDs);
-    yasm::DiagnosticsEngine diags(diagids, &diag_printer, false);
-    yasm::FileSystemOptions opts;
-    yasm::FileManager file_mgr(opts);
-    yasm::SourceManager source_mgr(diags, file_mgr);
+    OffsetDiagnosticPrinter diag_printer(llvm::errs());
+    IntrusiveRefCntPtr<DiagnosticIDs> diagids(new DiagnosticIDs);
+    DiagnosticsEngine diags(diagids, &diag_printer, false);
+    FileSystemOptions opts;
+    FileManager file_mgr(opts);
+    SourceManager source_mgr(diags, file_mgr);
     diags.setSourceManager(&source_mgr);
     diag_printer.setPrefix("yobjdump");
 
     // Load standard modules
-    if (!yasm::LoadStandardPlugins())
+    if (!LoadStandardPlugins())
     {
-        diags.Report(yasm::diag::fatal_standard_modules);
+        diags.Report(diag::fatal_standard_modules);
         return EXIT_FAILURE;
     }
 
@@ -571,7 +571,7 @@ main(int argc, char* argv[])
     // Determine input filename and open input file.
     if (in_filenames.empty())
     {
-        diags.Report(yasm::diag::fatal_no_input_files);
+        diags.Report(diag::fatal_no_input_files);
         return EXIT_FAILURE;
     }
 
