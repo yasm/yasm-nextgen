@@ -26,6 +26,7 @@
 
 #include "yasmx/StringTable.h"
 
+#include "llvm/ADT/StringRef.h"
 #include "llvm/Support/raw_ostream.h"
 
 
@@ -63,8 +64,8 @@ StringTable::Write(raw_ostream& os) const
 }
 
 void
-StringTable::Read(const unsigned char* buf, unsigned long size)
+StringTable::Read(StringRef buf)
 {
     m_storage.clear();
-    m_storage.insert(m_storage.end(), buf, buf+size);
+    m_storage.insert(m_storage.end(), buf.begin(), buf.end());
 }

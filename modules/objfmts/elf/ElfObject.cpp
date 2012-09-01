@@ -229,14 +229,15 @@ LoadStringTable(StringTable* strtab,
                 const ElfSection& elfsect,
                 DiagnosticsEngine& diags)
 {
-    const char* start = in.getBufferStart() + elfsect.getFileOffset();
-    const char* end = start + elfsect.getSize().getUInt();
-    if (end > in.getBufferEnd())
+    size_t start = elfsect.getFileOffset();
+    size_t size = elfsect.getSize().getUInt();
+    StringRef buf = in.getBuffer().substr(start, size);
+    if (buf.size() < size)
     {
         diags.Report(SourceLocation(), diag::err_string_table_unreadable);
         return false;
     }
-    strtab->Read(reinterpret_cast<const unsigned char*>(start), end-start);
+    strtab->Read(buf);
     return true;
 }
 

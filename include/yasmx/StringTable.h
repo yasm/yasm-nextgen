@@ -83,11 +83,10 @@ public:
     /// @param os       output stream
     void Write(raw_ostream& os) const;
 
-    /// Read the string table from a byte array.
+    /// Read the string table from a string.
     /// Deletes any pre-existing string table data.
-    /// @param buf      byte array
-    /// @param size     string table size, in bytes
-    void Read(const unsigned char* buf, unsigned long size);
+    /// @param buf      string
+    void Read(StringRef buf);
 
 private:
     std::vector<char> m_storage;
