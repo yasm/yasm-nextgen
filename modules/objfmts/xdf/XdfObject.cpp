@@ -559,8 +559,8 @@ XdfObject::Read(SourceManager& sm, DiagnosticsEngine& diags)
                 return false;
             }
 
-            section->bytecodes_front().getFixed().Write(inbuf.Read(xsect->size),
-                                                        xsect->size);
+            section->bytecodes_front().getFixed()
+                .Write(inbuf.Read(xsect->size));
         }
 
         // Associate section data with section

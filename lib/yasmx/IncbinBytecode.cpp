@@ -200,8 +200,7 @@ IncbinBytecode::Output(Bytecode& bc, BytecodeOutput& bc_out)
 
     // Copy len bytes
     Bytes& bytes = bc_out.getScratch();
-    bytes.Write(reinterpret_cast<const unsigned char*>(m_buf->getBufferStart())
-                + start, bc.getTailLen());
+    bytes.WriteString(m_buf->getBuffer().substr(start, bc.getTailLen()));
     bc_out.OutputBytes(bytes, bc.getSource());
     return true;
 }

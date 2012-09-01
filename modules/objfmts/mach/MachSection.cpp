@@ -86,11 +86,15 @@ void
 MachSection::Write(Bytes& bytes, const Section& sect, int long_int_size) const
 {
     // section and segname names, padded/truncated to 16 bytes
-    char namebuf[16];
-    std::strncpy(namebuf, sectname.c_str(), 16);
-    bytes.Write((unsigned char*)namebuf, 16);
-    std::strncpy(namebuf, segname.c_str(), 16);
-    bytes.Write((unsigned char*)namebuf, 16);
+    StringRef name(sectname);
+    bytes.WriteString(name.substr(0, 16));
+    if (name.size() < 16)
+        bytes.Write(16-name.size(), 0);
+
+    name = segname;
+    bytes.WriteString(name.substr(0, 16));
+    if (name.size() < 16)
+        bytes.Write(16-name.size(), 0);
 
     // section address, size depend on 32/64 bit mode
     WriteN(bytes, sect.getVMA(), long_int_size);    // address in memory

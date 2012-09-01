@@ -31,6 +31,8 @@
 ///
 #include <stdexcept>
 
+#include "llvm/ADT/ArrayRef.h"
+#include "llvm/ADT/StringRef.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "yasmx/Basic/LLVM.h"
 #include "yasmx/Config/export.h"
@@ -47,67 +49,80 @@ class InputBuffer : public EndianState
 {
 public:
     InputBuffer(const MemoryBuffer& input, size_t startpos=0);
-    InputBuffer(const unsigned char* input, size_t len);
+    InputBuffer(ArrayRef<unsigned char> input);
 
     /// Get buffer size.
     /// @return Buffer size.
-    size_t getSize() const { return m_end-m_start; }
+    size_t getSize() const { return m_data.size(); }
 
     /// Set read position.
     /// @param pos  new read position
-    void setPosition(size_t pos) { m_ptr = m_start + pos; }
+    void setPosition(size_t pos) { m_pos = pos; }
 
     /// Get read position.
     /// @return Current read position.
-    size_t getPosition() const { return m_ptr - m_start; }
+    size_t getPosition() const { return m_pos; }
 
     /// Get remaining bytes after read position.
     /// @return Number of bytes.
     size_t getReadableSize() const;
 
-    /// Perform a "read" by returning a pointer to the current read position
+    /// Perform a "read" by returning an array for the current read position
     /// and then advancing the read position.
-    /// @param n    number of bytes to advance read position by
-    /// @return Pointer to current read position.
+    /// @param n    number of bytes to return and advance read position by
+    /// @return Array of n bytes.
     /// Throws std::out_of_range if not enough bytes left to read n bytes.
-    const unsigned char* Read(size_t n);
+    ArrayRef<unsigned char> Read(size_t n);
+
+    /// Perform a "read" by returning a string for the current read position
+    /// and then advancing the read position.
+    /// @param n    number of bytes to return and advance read position by
+    /// @return String of n bytes.
+    /// Throws std::out_of_range if not enough bytes left to read n bytes.
+    StringRef ReadString(size_t n);
 
 private:
-    const unsigned char* m_start;
-    const unsigned char* m_end;
-    const unsigned char* m_ptr;
+    ArrayRef<unsigned char> m_data;
+    size_t m_pos;
 };
 
 inline
 InputBuffer::InputBuffer(const MemoryBuffer& input, size_t startpos)
-    : m_start(reinterpret_cast<const unsigned char*>(input.getBufferStart()))
-    , m_end(reinterpret_cast<const unsigned char*>(input.getBufferEnd()))
+    : m_data(reinterpret_cast<const unsigned char*>(input.getBufferStart()),
+             reinterpret_cast<const unsigned char*>(input.getBufferEnd()))
+    , m_pos(startpos)
 {
-    m_ptr = m_start + startpos;
 }
 
 inline
-InputBuffer::InputBuffer(const unsigned char* input, size_t len)
-    : m_start(input), m_end(input+len), m_ptr(input)
+InputBuffer::InputBuffer(ArrayRef<unsigned char> input)
+    : m_data(input), m_pos(0)
 {
 }
 
 inline size_t
 InputBuffer::getReadableSize() const
 {
-    if (m_ptr > m_end)
+    if (m_pos > m_data.size())
         return 0;
-    return m_end-m_ptr;
+    return m_data.size()-m_pos;
 }
 
-inline const unsigned char*
+inline ArrayRef<unsigned char>
 InputBuffer::Read(size_t n)
 {
-    const unsigned char* oldptr = m_ptr;
-    m_ptr += n;
-    if (m_ptr > m_end)
+    size_t oldpos = m_pos;
+    m_pos += n;
+    if (m_pos > m_data.size())
         throw std::out_of_range("read past end of buffer");
-    return oldptr;
+    return m_data.slice(oldpos, n);
+}
+
+inline StringRef
+InputBuffer::ReadString(size_t n)
+{
+    ArrayRef<unsigned char> arr = Read(n);
+    return StringRef(reinterpret_cast<const char*>(arr.data()), arr.size());
 }
 
 /// Read an unsigned 8-bit value from an input buffer.
@@ -116,8 +131,7 @@ InputBuffer::Read(size_t n)
 inline unsigned char
 ReadU8(InputBuffer& input)
 {
-    const unsigned char* ptr = input.Read(1);
-    return ptr[0] & 0xFF;
+    return input.Read(1)[0] & 0xFF;
 }
 
 /// Read an signed 8-bit value from an input buffer.
@@ -139,7 +153,7 @@ ReadS8(InputBuffer& input)
 inline unsigned short
 ReadU16(InputBuffer& input)
 {
-    const unsigned char* ptr = input.Read(2);
+    const unsigned char* ptr = input.Read(2).data();
     unsigned short val = 0;
     if (input.isBigEndian())
     {
@@ -175,7 +189,7 @@ ReadS16(InputBuffer& input)
 inline unsigned long
 ReadU32(InputBuffer& input)
 {
-    const unsigned char* ptr = input.Read(4);
+    const unsigned char* ptr = input.Read(4).data();
     unsigned long val = 0;
     if (input.isBigEndian())
     {

@@ -114,8 +114,7 @@ yasm::AppendData(BytecodeContainer& container,
                  bool append_zero)
 {
     Bytes& fixed = container.FreshBytecode().getFixed();
-    fixed.Write(reinterpret_cast<const unsigned char *>(str.data()),
-                str.size());
+    fixed.WriteString(str);
     if (append_zero)
         Write8(fixed, 0);
 }
@@ -127,8 +126,8 @@ yasm::AppendData(BytecodeContainer& container,
                  bool append_zero)
 {
     Bytes& fixed = container.FreshBytecode().getFixed();
+    fixed.WriteString(str);
     size_t len = str.size();
-    fixed.Write(reinterpret_cast<const unsigned char *>(str.data()), len);
     if (append_zero)
     {
         Write8(fixed, 0);

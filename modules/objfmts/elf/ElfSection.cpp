@@ -295,7 +295,7 @@ ElfSection::LoadSectionData(Section& sect,
         return false;
     }
 
-    sect.bytecodes_front().getFixed().Write(inbuf.Read(size), size);
+    sect.bytecodes_front().getFixed().Write(inbuf.Read(size));
     return true;
 }
 

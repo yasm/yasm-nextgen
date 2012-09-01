@@ -46,7 +46,7 @@ X86Opcode::Write(pugi::xml_node out) const
 void
 X86Opcode::ToBytes(Bytes& bytes) const
 {
-    bytes.Write(m_opcode, m_len);
+    bytes.Write(llvm::makeArrayRef(m_opcode, m_len));
 }
 
 void

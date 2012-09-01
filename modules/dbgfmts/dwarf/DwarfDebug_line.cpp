@@ -545,8 +545,7 @@ DwarfDebug::AppendSPP(BytecodeContainer& container)
     // directory list
     for (Dirs::const_iterator i=m_dirs.begin(), end=m_dirs.end(); i != end; ++i)
     {
-        bytes.Write(reinterpret_cast<const unsigned char*>(i->data()),
-                    i->length());
+        bytes.WriteString(*i);
         Write8(bytes, 0);
     }
     // finish with single 0 byte
@@ -562,8 +561,7 @@ DwarfDebug::AppendSPP(BytecodeContainer& container)
                 << static_cast<unsigned int>((i-m_filenames.begin())+1);
             continue;
         }
-        bytes.Write(reinterpret_cast<const unsigned char*>(i->filename.data()),
-                    i->filename.length());
+        bytes.WriteString(i->filename);
         Write8(bytes, 0);
 
         WriteULEB128(bytes, i->dir+1);  // dir

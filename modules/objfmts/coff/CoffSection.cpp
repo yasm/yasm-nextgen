@@ -26,8 +26,6 @@
 //
 #include "CoffSection.h"
 
-#include <cstring>
-
 #include "llvm/ADT/SmallString.h"
 #include "llvm/Support/raw_ostream.h"
 #include "yasmx/Bytes.h"
@@ -129,17 +127,21 @@ CoffSection::Write(Bytes& bytes, const Section& sect) const
 
     // section name
     StringRef fullname = sect.getName();
-    char name[8] = {0, 0, 0, 0, 0, 0, 0, 0};
     if (fullname.size() > 8)
     {
         SmallString<20> namenum;
         llvm::raw_svector_ostream os(namenum);
         os << '/' << m_strtab_name;
-        std::strncpy(name, os.str().data(), 8);
+        StringRef final = os.str().substr(0, 8);
+        bytes.WriteString(final);
+        if (final.size() < 8)
+            bytes.Write(8-final.size(), 0);
     }
     else
-        std::memcpy(name, fullname.data(), fullname.size());
-    bytes.Write(reinterpret_cast<unsigned char*>(name), 8);
+    {
+        bytes.WriteString(fullname);
+        bytes.Write(8-fullname.size(), 0);
+    }
     if (m_isdebug)
     {
         Write32(bytes, 0);          // physical address

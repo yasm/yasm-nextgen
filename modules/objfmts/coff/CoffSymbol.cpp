@@ -210,15 +210,13 @@ CoffSymbol::Write(Bytes& bytes,
 
     bytes.setLittleEndian();
 
-    std::string name;
-    size_t len;
-
+    StringRef name;
     if (sym.isAbsoluteSymbol())
         name = ".absolut";
     else
         name = sym.getName();
-    len = name.length();
 
+    size_t len = name.size();
     if (len > 8)
     {
         Write32(bytes, 0);                      // "zeros" field
@@ -227,7 +225,7 @@ CoffSymbol::Write(Bytes& bytes,
     else
     {
         // <8 chars, so no string table entry needed
-        bytes.Write(reinterpret_cast<const unsigned char*>(name.data()), len);
+        bytes.WriteString(name);
         bytes.Write(8-len, 0);
     }
     Write32(bytes, value);          // value
@@ -261,8 +259,7 @@ CoffSymbol::Write(Bytes& bytes,
                 }
                 else
                 {
-                    bytes.Write(reinterpret_cast<const unsigned char*>
-                                (i->fname.data()), len);
+                    bytes.WriteString(i->fname);
                     bytes.Write(18-len, 0);
                 }
                 break;

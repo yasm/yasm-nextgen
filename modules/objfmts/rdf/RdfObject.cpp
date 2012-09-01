@@ -663,7 +663,7 @@ RdfObject::Taste(const MemoryBuffer& in,
     if (inbuf.getReadableSize() < sizeof(RDF_MAGIC))
         return false;
 
-    const unsigned char* magic = inbuf.Read(sizeof(RDF_MAGIC));
+    const unsigned char* magic = inbuf.Read(sizeof(RDF_MAGIC)).data();
     for (unsigned int i=0; i<sizeof(RDF_MAGIC); ++i)
     {
         if (magic[i] != RDF_MAGIC[i])
@@ -698,7 +698,7 @@ RdfObject::Read(SourceManager& sm, DiagnosticsEngine& diags)
         return false;
     }
 
-    const unsigned char* magic = inbuf.Read(sizeof(RDF_MAGIC));
+    const unsigned char* magic = inbuf.Read(sizeof(RDF_MAGIC)).data();
     for (unsigned int i=0; i<sizeof(RDF_MAGIC); ++i)
     {
         if (magic[i] != RDF_MAGIC[i])
@@ -758,7 +758,7 @@ RdfObject::Read(SourceManager& sm, DiagnosticsEngine& diags)
                     << section->getName();
                 return false;
             }
-            section->bytecodes_front().getFixed().Write(inbuf.Read(size), size);
+            section->bytecodes_front().getFixed().Write(inbuf.Read(size));
         }
 
         // Create symbol for section start (used for relocations)
@@ -783,7 +783,7 @@ RdfObject::Read(SourceManager& sm, DiagnosticsEngine& diags)
         // Read record type and length
         unsigned int type = ReadU8(inbuf);
         unsigned int len = ReadU8(inbuf);
-        InputBuffer recbuf(inbuf.Read(len), len);
+        InputBuffer recbuf(inbuf.Read(len));
         switch (type)
         {
             case RDFREC_COMMON:
@@ -794,9 +794,7 @@ RdfObject::Read(SourceManager& sm, DiagnosticsEngine& diags)
                 unsigned long value = ReadU32(recbuf);
                 /*unsigned int align = */ReadU16(recbuf);
                 size_t namelen = recbuf.getReadableSize();
-                StringRef symname(
-                    reinterpret_cast<const char*>(recbuf.Read(namelen)),
-                    namelen-1);
+                StringRef symname = recbuf.ReadString(namelen).drop_back();
 
                 // Create symbol
                 SymbolRef sym = m_object.getSymbol(symname);
@@ -819,9 +817,7 @@ RdfObject::Read(SourceManager& sm, DiagnosticsEngine& diags)
                 /*unsigned int flags = */ReadU8(recbuf);
                 unsigned int scnum = ReadU16(recbuf);
                 size_t namelen = recbuf.getReadableSize();
-                StringRef symname(
-                    reinterpret_cast<const char*>(recbuf.Read(namelen)),
-                    namelen-1);
+                StringRef symname = recbuf.ReadString(namelen).drop_back();
 
                 // Create symbol
                 SymbolRef sym = m_object.getSymbol(symname);
@@ -842,9 +838,7 @@ RdfObject::Read(SourceManager& sm, DiagnosticsEngine& diags)
                 unsigned int scnum = ReadU8(recbuf);
                 unsigned long value = ReadU32(recbuf);
                 size_t namelen = recbuf.getReadableSize();
-                StringRef symname(
-                    reinterpret_cast<const char*>(recbuf.Read(namelen)),
-                    namelen-1);
+                StringRef symname = recbuf.ReadString(namelen).drop_back();
 
                 // Create symbol
                 SymbolRef sym = m_object.getSymbol(symname);
@@ -855,14 +849,10 @@ RdfObject::Read(SourceManager& sm, DiagnosticsEngine& diags)
                 break;
             }
             case RDFREC_MODNAME:
-                m_module_names.push_back(
-                    std::string(reinterpret_cast<const char*>(recbuf.Read(len)),
-                                len-1));
+                m_module_names.push_back(recbuf.ReadString(len).drop_back());
                 break;
             case RDFREC_DLL:
-                m_library_names.push_back(
-                    std::string(reinterpret_cast<const char*>(recbuf.Read(len)),
-                                len-1));
+                m_library_names.push_back(recbuf.ReadString(len).drop_back());
                 break;
             case RDFREC_BSS:
             {
@@ -912,7 +902,7 @@ RdfObject::Read(SourceManager& sm, DiagnosticsEngine& diags)
         // Read record type and length
         unsigned int type = ReadU8(inbuf);
         unsigned int len = ReadU8(inbuf);
-        InputBuffer recbuf(inbuf.Read(len), len);
+        InputBuffer recbuf(inbuf.Read(len));
         switch (type)
         {
             case RDFREC_RELOC:

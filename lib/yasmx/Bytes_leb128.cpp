@@ -94,8 +94,8 @@ yasm::ReadLEB128(InputBuffer& input, bool sign, /*@out@*/ unsigned long* size)
 
     for (;;)
     {
-        const unsigned char* ptr = input.Read(1);
-        uint64_t v = *ptr & 0x7F;
+        unsigned char chv = input.Read(1)[0];
+        uint64_t v = chv & 0x7F;
         words[nwords-1] |= v << (i-64*(nwords-1));
         if ((i+7) > 64*nwords)
         {
@@ -105,7 +105,7 @@ yasm::ReadLEB128(InputBuffer& input, bool sign, /*@out@*/ unsigned long* size)
         }
         ++nread;
         i += 7;
-        if ((*ptr & 0x80) != 0x80)
+        if ((chv & 0x80) != 0x80)
             break;
     }
 
