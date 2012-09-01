@@ -79,7 +79,7 @@ BinObject::OutputMap(const IntNum& origin,
         map_flags = MAP_BRIEF;          // default to brief
 
     std::string err;
-    llvm::raw_fd_ostream os
+    raw_fd_ostream os
         (m_map_filename.empty() ? "-" : m_map_filename.c_str(), err);
     if (!err.empty())
     {
@@ -106,9 +106,7 @@ namespace {
 class BinOutput : public BytecodeStreamOutput
 {
 public:
-    BinOutput(llvm::raw_fd_ostream& os,
-              Object& object,
-              DiagnosticsEngine& diags);
+    BinOutput(raw_fd_ostream& os, Object& object, DiagnosticsEngine& diags);
     ~BinOutput();
 
     void OutputSection(Section& sect, const IntNum& origin);
@@ -120,12 +118,12 @@ public:
 
 private:
     Object& m_object;
-    llvm::raw_fd_ostream& m_fd_os;
+    raw_fd_ostream& m_fd_os;
     BytecodeNoOutput m_no_output;
 };
 } // anonymous namespace
 
-BinOutput::BinOutput(llvm::raw_fd_ostream& os,
+BinOutput::BinOutput(raw_fd_ostream& os,
                      Object& object,
                      DiagnosticsEngine& diags)
     : BytecodeStreamOutput(os, diags),
@@ -258,7 +256,7 @@ CheckSymbol(const Symbol& sym, DiagnosticsEngine& diags)
 }
 
 void
-BinObject::Output(llvm::raw_fd_ostream& os,
+BinObject::Output(raw_fd_ostream& os,
                   bool all_syms,
                   DebugFormat& dbgfmt,
                   DiagnosticsEngine& diags)
@@ -311,7 +309,7 @@ BinObject::Output(llvm::raw_fd_ostream& os,
 Section*
 BinObject::AddDefaultSection()
 {
-    llvm::IntrusiveRefCntPtr<DiagnosticIDs> diagids(new DiagnosticIDs);
+    IntrusiveRefCntPtr<DiagnosticIDs> diagids(new DiagnosticIDs);
     DiagnosticsEngine diags(diagids);
     Section* section = AppendSection(".text", SourceLocation(), diags);
     section->setDefault(true);
@@ -319,7 +317,7 @@ BinObject::AddDefaultSection()
 }
 
 Section*
-BinObject::AppendSection(llvm::StringRef name,
+BinObject::AppendSection(StringRef name,
                          SourceLocation source,
                          DiagnosticsEngine& diags)
 {
@@ -377,7 +375,7 @@ BinObject::DirSection(DirectiveInfo& info, DiagnosticsEngine& diags)
                      diag::err_value_string_or_id);
         return;
     }
-    llvm::StringRef sectname = sectname_nv.getString();
+    StringRef sectname = sectname_nv.getString();
 
     Section* sect = m_object.FindSection(sectname);
     bool first = true;
@@ -541,16 +539,16 @@ BinObject::DirMap(DirectiveInfo& info, DiagnosticsEngine& diags)
             TR1::bind(&BinObject::setMapFilename, this, _1, _2, _3));
 }
 
-std::vector<llvm::StringRef>
+std::vector<StringRef>
 BinObject::getDebugFormatKeywords()
 {
     static const char* keywords[] = {"null"};
     size_t keywords_size = sizeof(keywords)/sizeof(keywords[0]);
-    return std::vector<llvm::StringRef>(keywords, keywords+keywords_size);
+    return std::vector<StringRef>(keywords, keywords+keywords_size);
 }
 
 void
-BinObject::AddDirectives(Directives& dirs, llvm::StringRef parser)
+BinObject::AddDirectives(Directives& dirs, StringRef parser)
 {
     static const Directives::Init<BinObject> nasm_dirs[] =
     {

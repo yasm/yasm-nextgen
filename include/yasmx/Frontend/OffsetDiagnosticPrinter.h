@@ -27,24 +27,23 @@
 // POSSIBILITY OF SUCH DAMAGE.
 //
 #include "yasmx/Basic/Diagnostic.h"
+#include "yasmx/Basic/LLVM.h"
 #include "yasmx/Basic/SourceLocation.h"
 #include "yasmx/Config/export.h"
-
-namespace llvm { class raw_ostream; }
 
 namespace yasm
 {
 
 class YASM_LIB_EXPORT OffsetDiagnosticPrinter : public DiagnosticConsumer
 {
-    llvm::raw_ostream& m_os;
+    raw_ostream& m_os;
     bool m_print_diagnostic_option;
     bool m_use_colors;
 
     std::string m_prefix;
 
 public:
-    OffsetDiagnosticPrinter(llvm::raw_ostream &os,
+    OffsetDiagnosticPrinter(raw_ostream &os,
                             bool print_diagnostic_option = true,
                             bool use_colors = false)
         : m_os(os)

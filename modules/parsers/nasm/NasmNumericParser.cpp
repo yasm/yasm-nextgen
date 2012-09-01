@@ -41,6 +41,7 @@
 
 using namespace yasm;
 using namespace yasm::parser;
+using llvm::APFloat;
 
 /// decimal integer: [0-9] [0-9_]*
 /// binary integer: [01] [01_]* [bB]
@@ -55,7 +56,7 @@ using namespace yasm::parser;
 /// hex float: "0x" [0-9a-fA-F_]* [.] [0-9a-fA-F]* ([pP] [-+]? [0-9]+)?
 /// hex float: "0x" [0-9a-fA-F_]+ [pP] [-+]? [0-9]+
 ///
-NasmNumericParser::NasmNumericParser(llvm::StringRef str,
+NasmNumericParser::NasmNumericParser(StringRef str,
                                      SourceLocation loc,
                                      Preprocessor& pp)
     : NumericParser(str)
@@ -192,11 +193,11 @@ NasmNumericParser::~NasmNumericParser()
 {
 }
 
-llvm::APFloat
+APFloat
 NasmNumericParser::getFloatValue(const llvm::fltSemantics& format,
                                  bool* is_exact)
 {
-    llvm::SmallVector<char, 256> float_chars;
+    SmallVector<char, 256> float_chars;
     for (const char* ch = m_digits_begin; ch < m_digits_end; ++ch)
     {
         if (*ch != '_')
@@ -205,14 +206,13 @@ NasmNumericParser::getFloatValue(const llvm::fltSemantics& format,
 
     float_chars.push_back('\0');
 
-    llvm::APFloat val(format, llvm::APFloat::fcZero, false);
+    APFloat val(format, APFloat::fcZero, false);
   
-    llvm::APFloat::opStatus status =
-        val.convertFromString(&float_chars[0],
-                              llvm::APFloat::rmNearestTiesToEven);
+    APFloat::opStatus status =
+        val.convertFromString(&float_chars[0], APFloat::rmNearestTiesToEven);
 
     if (is_exact)
-        *is_exact = (status == llvm::APFloat::opOK);
+        *is_exact = (status == APFloat::opOK);
 
     return val;
 }

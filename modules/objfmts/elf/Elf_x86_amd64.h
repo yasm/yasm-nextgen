@@ -39,7 +39,7 @@ class YASM_STD_EXPORT ElfReloc_x86_amd64 : public ElfReloc
 public:
     ElfReloc_x86_amd64(const ElfConfig& config,
                        const ElfSymtab& symtab,
-                       const llvm::MemoryBuffer& in,
+                       const MemoryBuffer& in,
                        unsigned long* pos,
                        bool rela)
         : ElfReloc(config, symtab, in, pos, rela)

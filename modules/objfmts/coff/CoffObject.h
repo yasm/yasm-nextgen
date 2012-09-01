@@ -60,19 +60,19 @@ public:
                bool win64 = false);
     virtual ~CoffObject();
 
-    virtual void AddDirectives(Directives& dirs, llvm::StringRef parser);
+    virtual void AddDirectives(Directives& dirs, StringRef parser);
 
-    virtual void InitSymbols(llvm::StringRef parser);
+    virtual void InitSymbols(StringRef parser);
 #if 0
     virtual void read(std::istream& is);
 #endif
-    virtual void Output(llvm::raw_fd_ostream& os,
+    virtual void Output(raw_fd_ostream& os,
                         bool all_syms,
                         DebugFormat& dbgfmt,
                         DiagnosticsEngine& diags);
 
     virtual Section* AddDefaultSection();
-    virtual Section* AppendSection(llvm::StringRef name,
+    virtual Section* AppendSection(StringRef name,
                                    SourceLocation source,
                                    DiagnosticsEngine& diags);
 
@@ -81,14 +81,14 @@ public:
     bool isWin32() const { return m_win32; }
     bool isWin64() const { return m_win64; }
 
-    static llvm::StringRef getName() { return "COFF (DJGPP)"; }
-    static llvm::StringRef getKeyword() { return "coff"; }
-    static llvm::StringRef getExtension() { return ".o"; }
+    static StringRef getName() { return "COFF (DJGPP)"; }
+    static StringRef getKeyword() { return "coff"; }
+    static StringRef getExtension() { return ".o"; }
     static unsigned int getDefaultX86ModeBits() { return 32; }
-    static llvm::StringRef getDefaultDebugFormatKeyword() { return "null"; }
-    static std::vector<llvm::StringRef> getDebugFormatKeywords();
+    static StringRef getDefaultDebugFormatKeyword() { return "null"; }
+    static std::vector<StringRef> getDebugFormatKeywords();
     static bool isOkObject(Object& object);
-    static bool Taste(const llvm::MemoryBuffer& in,
+    static bool Taste(const MemoryBuffer& in,
                       /*@out@*/ std::string* arch_keyword,
                       /*@out@*/ std::string* machine)
     { return false; }
@@ -96,7 +96,7 @@ public:
 protected:
     /// Initialize section (and COFF data) based on section name.
     /// @return True if section name recognized, false otherwise.
-    virtual bool InitSection(llvm::StringRef name,
+    virtual bool InitSection(StringRef name,
                              Section& section,
                              CoffSection* coffsect,
                              SourceLocation source,

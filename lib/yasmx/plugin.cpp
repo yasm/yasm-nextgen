@@ -29,6 +29,7 @@
 ///
 #include "yasmx/System/plugin.h"
 
+#include <string>
 #include <vector>
 
 #if defined(_MSC_VER) || defined(__MINGW32__)
@@ -42,6 +43,8 @@
 #ifdef HAVE_STDINT_H
 #include <stdint.h>
 #endif
+
+#include "llvm/ADT/StringRef.h"
 
 
 using namespace yasm;
@@ -61,7 +64,7 @@ LoadDLL(const std::string& name)
 }
 
 bool
-yasm::LoadPlugin(llvm::StringRef name)
+yasm::LoadPlugin(StringRef name)
 {
     // Load library
     void* lib = 0;

@@ -40,7 +40,7 @@ using namespace yasm;
 
 void
 yasm::DirIdentCommon(ObjectFormat& objfmt,
-                     llvm::StringRef sectname,
+                     StringRef sectname,
                      DirectiveInfo& info,
                      DiagnosticsEngine& diags)
 {

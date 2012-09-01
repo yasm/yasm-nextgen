@@ -50,28 +50,28 @@ public:
     /// Destructor.
     ~RdfObject();
 
-    void AddDirectives(Directives& dirs, llvm::StringRef parser);
+    void AddDirectives(Directives& dirs, StringRef parser);
 
     bool Read(SourceManager& sm, DiagnosticsEngine& diags);
-    void Output(llvm::raw_fd_ostream& os,
+    void Output(raw_fd_ostream& os,
                 bool all_syms,
                 DebugFormat& dbgfmt,
                 DiagnosticsEngine& diags);
 
     Section* AddDefaultSection();
-    Section* AppendSection(llvm::StringRef name,
+    Section* AppendSection(StringRef name,
                            SourceLocation source,
                            DiagnosticsEngine& diags);
 
-    static llvm::StringRef getName()
+    static StringRef getName()
     { return "Relocatable Dynamic Object File Format (RDOFF) v2.0"; }
-    static llvm::StringRef getKeyword() { return "rdf"; }
-    static llvm::StringRef getExtension() { return ".rdf"; }
+    static StringRef getKeyword() { return "rdf"; }
+    static StringRef getExtension() { return ".rdf"; }
     static unsigned int getDefaultX86ModeBits() { return 32; }
-    static llvm::StringRef getDefaultDebugFormatKeyword() { return "null"; }
-    static std::vector<llvm::StringRef> getDebugFormatKeywords();
+    static StringRef getDefaultDebugFormatKeyword() { return "null"; }
+    static std::vector<StringRef> getDebugFormatKeywords();
     static bool isOkObject(Object& object) { return true; }
-    static bool Taste(const llvm::MemoryBuffer& in,
+    static bool Taste(const MemoryBuffer& in,
                       /*@out@*/ std::string* arch_keyword,
                       /*@out@*/ std::string* machine);
 
@@ -80,7 +80,7 @@ private:
     void DirLibrary(DirectiveInfo& info, DiagnosticsEngine& diags);
     void DirModule(DirectiveInfo& info, DiagnosticsEngine& diags);
 
-    void AddLibOrModule(llvm::StringRef name,
+    void AddLibOrModule(StringRef name,
                         bool lib,
                         SourceLocation name_source,
                         DiagnosticsEngine& diags);

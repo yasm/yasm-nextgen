@@ -46,12 +46,12 @@ using namespace yasm::objfmt;
 
 const char* ElfSymbol::key = "objfmt::elf::ElfSymbol";
 
-ElfSymbol::ElfSymbol(const ElfConfig&           config,
-                     const llvm::MemoryBuffer&  in,
-                     const ElfSection&          symtab_sect,
-                     ElfSymbolIndex             index,
-                     Section*                   sections[],
-                     DiagnosticsEngine&         diags)
+ElfSymbol::ElfSymbol(const ElfConfig&       config,
+                     const MemoryBuffer&    in,
+                     const ElfSection&      symtab_sect,
+                     ElfSymbolIndex         index,
+                     Section*               sections[],
+                     DiagnosticsEngine&     diags)
     : m_sect(0)
     , m_name_index(0)
     , m_value(0)

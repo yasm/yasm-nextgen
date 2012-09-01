@@ -81,10 +81,10 @@ public:
               HeaderSearch& headers);
     ~GasParser();
 
-    void AddDirectives(Directives& dirs, llvm::StringRef parser);
+    void AddDirectives(Directives& dirs, StringRef parser);
 
-    static llvm::StringRef getName() { return "GNU AS (GAS)-compatible parser"; }
-    static llvm::StringRef getKeyword() { return "gas"; }
+    static StringRef getName() { return "GNU AS (GAS)-compatible parser"; }
+    static StringRef getKeyword() { return "gas"; }
 
     void Parse(Object& object, Directives& dirs, DiagnosticsEngine& diags);
 
@@ -98,19 +98,19 @@ private:
     /// @param source   source location of numeric index
     /// @param inc      increment label index (typically used for definition).
     /// @return True on success, false on error.
-    bool getLocalLabel(llvm::SmallVectorImpl<char>& name,
-                       llvm::StringRef num,
+    bool getLocalLabel(SmallVectorImpl<char>& name,
+                       StringRef num,
                        char suffix,
                        SourceLocation source,
                        bool inc = false);
 
     bool ParseLine();
-    void setDebugFile(llvm::StringRef filename,
+    void setDebugFile(StringRef filename,
                       SourceRange filename_source,
                       SourceLocation dir_source);
     void setDebugFile(const IntNum& fileno,
                       SourceRange fileno_source,
-                      llvm::StringRef filename,
+                      StringRef filename,
                       SourceRange filename_source,
                       SourceLocation dir_source);
     void ParseCppLineMarker();
@@ -175,13 +175,13 @@ private:
     bool ParseInteger(IntNum* intn);
     const Register* ParseRegister();
 
-    void DefineLabel(llvm::StringRef name, SourceLocation source);
+    void DefineLabel(StringRef name, SourceLocation source);
     void DefineLcomm(SymbolRef sym,
                      SourceLocation source,
                      std::auto_ptr<Expr> size,
                      const Expr& align);
-    void SwitchSection(llvm::StringRef name, bool builtin, SourceRange source);
-    Section& getSection(llvm::StringRef name, bool builtin, SourceRange source);
+    void SwitchSection(StringRef name, bool builtin, SourceRange source);
+    Section& getSection(StringRef name, bool builtin, SourceRange source);
 
     void DoParse();
 
@@ -217,7 +217,7 @@ private:
 
     // Index of local labels; what's stored here is the /next/ index,
     // so these are all 0 at start.
-    llvm::SmallVector<unsigned long, 10> m_local;
+    SmallVector<unsigned long, 10> m_local;
 
     // Start of comment.
     SourceLocation m_comment_start;

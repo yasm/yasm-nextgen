@@ -36,8 +36,6 @@
 #include "ElfTypes.h"
 
 
-namespace llvm { class MemoryBuffer; }
-
 namespace yasm
 {
 
@@ -110,13 +108,12 @@ public:
     virtual ~ElfMachine();
 
     virtual void Configure(/*@out@*/ ElfConfig* config) const = 0;
-    virtual void AddSpecialSymbols(Object& object,
-                                   llvm::StringRef parser) const = 0;
+    virtual void AddSpecialSymbols(Object& object, StringRef parser) const = 0;
 
     virtual std::auto_ptr<ElfReloc>
         ReadReloc(const ElfConfig& config,
                   const ElfSymtab& symtab,
-                  const llvm::MemoryBuffer& in,
+                  const MemoryBuffer& in,
                   unsigned long* pos,
                   bool rela) const = 0;
 
@@ -134,14 +131,14 @@ YASM_STD_EXPORT
 void AddElfSSym(Object& object, const ElfSpecialSymbolData& ssym);
 
 namespace impl {
-bool ElfMatch_x86_x86(llvm::StringRef arch_keyword,
-                      llvm::StringRef arch_machine,
+bool ElfMatch_x86_x86(StringRef arch_keyword,
+                      StringRef arch_machine,
                       ElfClass cls);
-bool ElfMatch_x86_amd64(llvm::StringRef arch_keyword,
-                        llvm::StringRef arch_machine,
+bool ElfMatch_x86_amd64(StringRef arch_keyword,
+                        StringRef arch_machine,
                         ElfClass cls);
-bool ElfMatch_x86_x32(llvm::StringRef arch_keyword,
-                      llvm::StringRef arch_machine,
+bool ElfMatch_x86_x32(StringRef arch_keyword,
+                      StringRef arch_machine,
                       ElfClass cls);
 
 std::auto_ptr<ElfMachine> ElfCreate_x86_x86();

@@ -178,7 +178,7 @@ DwarfDebug::setHeadEnd(Location head, Location tail)
 }
 
 void
-DwarfDebug::AddDebugDirectives(Directives& dirs, llvm::StringRef parser)
+DwarfDebug::AddDebugDirectives(Directives& dirs, StringRef parser)
 {
     static const Directives::Init<DwarfDebug> nasm_dirs[] =
     {
@@ -198,7 +198,7 @@ DwarfDebug::AddDebugDirectives(Directives& dirs, llvm::StringRef parser)
 }
 
 void
-DwarfDebug::AddDirectives(Directives& dirs, llvm::StringRef parser)
+DwarfDebug::AddDirectives(Directives& dirs, StringRef parser)
 {
     AddDebugDirectives(dirs, parser);
     AddCfiDirectives(dirs, parser);
@@ -209,7 +209,7 @@ CfiDebug::~CfiDebug()
 }
 
 void
-CfiDebug::AddDirectives(Directives& dirs, llvm::StringRef parser)
+CfiDebug::AddDirectives(Directives& dirs, StringRef parser)
 {
     AddCfiDirectives(dirs, parser);
 }

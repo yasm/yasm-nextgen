@@ -38,6 +38,7 @@
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/SmallVector.h"
 #include "yasmx/Basic/Diagnostic.h"
+#include "yasmx/Basic/LLVM.h"
 #include "yasmx/Basic/SourceLocation.h"
 #include "yasmx/Basic/SourceManager.h"
 #include "yasmx/Config/export.h"
@@ -86,30 +87,30 @@ public:
 
     /// Return information about the specified preprocessor
     /// identifier token.
-    IdentifierInfo* getIdentifierInfo(llvm::StringRef name) const
+    IdentifierInfo* getIdentifierInfo(StringRef name) const
     {
         return &m_identifiers.get(name);
     }
 
     /// Pre-include arbitrary text content (e.g. from a file).
     /// @param buf      memory buffer
-    virtual void PredefineText(llvm::MemoryBuffer* buf);
+    virtual void PredefineText(MemoryBuffer* buf);
 
     /// Pre-include file.
     /// @param filename filename
-    virtual void PreInclude(llvm::StringRef filename);
+    virtual void PreInclude(StringRef filename);
 
     /// Pre-define a macro.
     /// @param macronameval "name=value" string
-    virtual void PredefineMacro(llvm::StringRef macronameval) = 0;
+    virtual void PredefineMacro(StringRef macronameval) = 0;
 
     /// Un-define a macro.
     /// @param macroname    macro name
-    virtual void UndefineMacro(llvm::StringRef macroname) = 0;
+    virtual void UndefineMacro(StringRef macroname) = 0;
 
     /// Define a builtin macro, preprocessed before the "standard" macros.
     /// @param macronameval "name=value" string
-    virtual void DefineBuiltin(llvm::StringRef macronameval) = 0;
+    virtual void DefineBuiltin(StringRef macronameval) = 0;
 
     /// Enter the specified FileID as the main source file,
     /// which implicitly adds the builtin defines etc.
@@ -252,8 +253,8 @@ public:
     /// getSpelling - This method is used to get the spelling of a token into a
     /// SmallVector. Note that the returned StringRef may not point to the
     /// supplied buffer if a copy can be avoided.
-    llvm::StringRef getSpelling(const Token& tok,
-                                llvm::SmallVectorImpl<char>& buffer) const;
+    StringRef getSpelling(const Token& tok,
+                          SmallVectorImpl<char>& buffer) const;
 
     /// \brief Computes the source location just past the end of the
     /// token at this source location.
@@ -300,7 +301,7 @@ public:
     /// LookupFile - Given a "foo" or <foo> reference, look up the indicated file,
     /// return null on failure.  isAngled indicates whether the file reference is
     /// for system #include's or not (i.e. using <> instead of "").
-    const FileEntry* LookupFile(llvm::StringRef filename,
+    const FileEntry* LookupFile(StringRef filename,
                                 bool is_angled,
                                 const DirectoryLookup* from_dir,
                                 const DirectoryLookup*& cur_dir);
@@ -347,7 +348,7 @@ protected:
     /// This is the current top of the stack that we're lexing from if
     /// not expanding a macro and we are lexing directly from source code.
     /// Only one of m_cur_lexer or m_cur_token_lexer will be non-null.
-    llvm::OwningPtr<Lexer> m_cur_lexer;
+    OwningPtr<Lexer> m_cur_lexer;
 
     /// CurLookup - The DirectoryLookup structure used to find the current
     /// FileEntry, if CurLexer is non-null and if applicable.  This allows us to
@@ -356,7 +357,7 @@ protected:
 
     /// This is the current macro we are expanding, if we are expanding a
     /// macro.  One of m_cur_lexer and m_cur_token_lexer must be null.
-    llvm::OwningPtr<TokenLexer> m_cur_token_lexer;
+    OwningPtr<TokenLexer> m_cur_token_lexer;
 
     /// This keeps track of the stack of files currently
     /// %included, and macros currently being expanded from, not counting
@@ -390,7 +391,7 @@ protected:
 
     /// This string is the predefined macros that preprocessor
     /// should use from the command line etc.
-    std::vector<llvm::MemoryBuffer*> m_predefines;
+    std::vector<MemoryBuffer*> m_predefines;
   
     /// Cache macro expanders to reduce malloc traffic.
     enum { TokenLexerCacheSize = 8 };
@@ -398,7 +399,7 @@ protected:
     TokenLexer* m_token_lexer_cache[TokenLexerCacheSize];
 
     // Cached tokens state.
-    typedef llvm::SmallVector<Token, 1> CachedTokens;
+    typedef SmallVector<Token, 1> CachedTokens;
 
     /// Cached tokens are stored here when we do backtracking or
     /// lookahead. They are "lexed" by the caching_lex() method.
@@ -421,7 +422,7 @@ protected:
 
     /// Factory function to make a new lexer.
     virtual Lexer* CreateLexer(FileID fid,
-                               const llvm::MemoryBuffer* input_buffer) = 0;
+                               const MemoryBuffer* input_buffer) = 0;
 
 #if 0
     /// Factory function to make a new raw lexer.

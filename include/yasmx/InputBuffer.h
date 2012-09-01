@@ -32,6 +32,7 @@
 #include <stdexcept>
 
 #include "llvm/Support/MemoryBuffer.h"
+#include "yasmx/Basic/LLVM.h"
 #include "yasmx/Config/export.h"
 #include "yasmx/Support/EndianState.h"
 
@@ -45,7 +46,7 @@ class IntNum;
 class InputBuffer : public EndianState
 {
 public:
-    InputBuffer(const llvm::MemoryBuffer& input, size_t startpos=0);
+    InputBuffer(const MemoryBuffer& input, size_t startpos=0);
     InputBuffer(const unsigned char* input, size_t len);
 
     /// Get buffer size.
@@ -78,7 +79,7 @@ private:
 };
 
 inline
-InputBuffer::InputBuffer(const llvm::MemoryBuffer& input, size_t startpos)
+InputBuffer::InputBuffer(const MemoryBuffer& input, size_t startpos)
     : m_start(reinterpret_cast<const unsigned char*>(input.getBufferStart()))
     , m_end(reinterpret_cast<const unsigned char*>(input.getBufferEnd()))
 {

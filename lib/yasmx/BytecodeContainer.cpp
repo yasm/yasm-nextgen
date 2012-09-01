@@ -58,7 +58,7 @@ public:
     /// @param size     size in bytes
     void Extend(unsigned long size);
 
-    llvm::StringRef getType() const;
+    StringRef getType() const;
 
     GapBytecode* clone() const;
 
@@ -104,7 +104,7 @@ GapBytecode::Output(Bytecode& bc, BytecodeOutput& bc_out)
     return true;
 }
 
-llvm::StringRef
+StringRef
 GapBytecode::getType() const
 {
     return "yasm::GapBytecode";

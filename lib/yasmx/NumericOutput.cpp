@@ -39,8 +39,10 @@
 
 
 using namespace yasm;
+using llvm::APInt;
+using llvm::APFloat;
 
-static llvm::APInt staticbv(IntNum::BITVECT_NATIVE_SIZE, 0);
+static APInt staticbv(IntNum::BITVECT_NATIVE_SIZE, 0);
 
 NumericOutput::NumericOutput(Bytes& bytes)
     : m_bytes(bytes)
@@ -69,7 +71,7 @@ NumericOutput::EmitWarnings(DiagnosticsEngine& diags) const
 }
 
 void
-NumericOutput::OutputInteger(const llvm::APInt& intn)
+NumericOutput::OutputInteger(const APInt& intn)
 {
     // General size warnings
     if (m_warns_enabled && m_sign && !isOkSize(intn, m_size, m_rshift, 1))
@@ -82,7 +84,7 @@ NumericOutput::OutputInteger(const llvm::APInt& intn)
         m_warns |= TRUNCATED;
 
     // Make a working copy of the right-shifted value
-    llvm::APInt work = intn.ashr(m_rshift);
+    APInt work = intn.ashr(m_rshift);
 
     // Sign extend (or truncate) to correct size
     work = work.sextOrTrunc(m_size);
@@ -239,37 +241,37 @@ NumericOutput::OutputInteger(const IntNum& intn)
 }
 
 void
-NumericOutput::OutputFloat(const llvm::APFloat& flt)
+NumericOutput::OutputFloat(const APFloat& flt)
 {
     const llvm::fltSemantics* semantics;
     switch (m_size)
     {
-        case 16: semantics = &llvm::APFloat::IEEEhalf; break;
-        case 32: semantics = &llvm::APFloat::IEEEsingle; break;
-        case 64: semantics = &llvm::APFloat::IEEEdouble; break;
-        case 80: semantics = &llvm::APFloat::x87DoubleExtended; break;
+        case 16: semantics = &APFloat::IEEEhalf; break;
+        case 32: semantics = &APFloat::IEEEsingle; break;
+        case 64: semantics = &APFloat::IEEEdouble; break;
+        case 80: semantics = &APFloat::x87DoubleExtended; break;
         default:
             assert(false && "invalid floating point constant size");
             return;
     }
 
-    llvm::APFloat fltcopy = flt;
+    APFloat fltcopy = flt;
     bool lost_info = false;
-    llvm::APFloat::opStatus status =
-        fltcopy.convert(*semantics, llvm::APFloat::rmNearestTiesToEven,
+    APFloat::opStatus status =
+        fltcopy.convert(*semantics, APFloat::rmNearestTiesToEven,
                         &lost_info);
     if (m_warns_enabled)
     {
         switch (status)
         {
-            case llvm::APFloat::opOverflow:     m_warns |= FP_OVERFLOW; break;
-            case llvm::APFloat::opUnderflow:    m_warns |= FP_UNDERFLOW; break;
+            case APFloat::opOverflow:   m_warns |= FP_OVERFLOW; break;
+            case APFloat::opUnderflow:  m_warns |= FP_UNDERFLOW; break;
             default: break;
         }
     }
 
     // use APInt function to actually output
-    llvm::APInt fltbits = fltcopy.bitcastToAPInt();
+    APInt fltbits = fltcopy.bitcastToAPInt();
     assert(fltbits.getBitWidth() == m_size && "bad float to bits conversion");
     OutputInteger(fltbits);
 }

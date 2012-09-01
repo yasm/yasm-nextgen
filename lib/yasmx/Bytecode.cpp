@@ -318,7 +318,7 @@ Bytecode::Write(pugi::xml_node out) const
     if (m_index != ~0UL)
         root.append_attribute("index") = m_index;
     root.append_attribute("id") =
-        llvm::Twine::utohexstr((uint64_t)this).str().c_str();
+        Twine::utohexstr((uint64_t)this).str().c_str();
     root.append_attribute("source") = m_source.getRawEncoding();
     root.append_attribute("offset") = m_offset;
 

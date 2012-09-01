@@ -62,7 +62,7 @@ TransformDistBase::operator() (Expr& e, int pos)
     // Handle symrec-symrec by checking for (-1*symrec)
     // and symrec term pairs (where both symrecs are in the same
     // segment).
-    llvm::SmallVector<int, 3> relpos, subpos, subneg1, subroot;
+    SmallVector<int, 3> relpos, subpos, subneg1, subroot;
 
     // Scan for symrec and (-1*symrec) terms (or location equivalents)
     int n = pos-1;
@@ -279,7 +279,7 @@ yasm::Evaluate(const Expr& e,
         return true;
     }
 
-    llvm::SmallVector<ExprTerm, 8> stack;
+    SmallVector<ExprTerm, 8> stack;
 
     for (ExprTerms::const_iterator i=terms.begin(), end=terms.end();
          i != end; ++i)

@@ -73,10 +73,10 @@ public:
                HeaderSearch& headers);
     ~NasmParser();
 
-    void AddDirectives(Directives& dirs, llvm::StringRef parser);
+    void AddDirectives(Directives& dirs, StringRef parser);
 
-    static llvm::StringRef getName() { return "NASM-compatible parser"; }
-    static llvm::StringRef getKeyword() { return "nasm"; }
+    static StringRef getName() { return "NASM-compatible parser"; }
+    static StringRef getKeyword() { return "nasm"; }
 
     void Parse(Object& object, Directives& dirs, DiagnosticsEngine& diags);
 
@@ -129,7 +129,7 @@ private:
     void DirAbsolute(DirectiveInfo& info, DiagnosticsEngine& diags);
     void DirAlign(DirectiveInfo& info, DiagnosticsEngine& diags);
 
-    void DoDirective(llvm::StringRef name, DirectiveInfo& info);
+    void DoDirective(StringRef name, DirectiveInfo& info);
 
     Object* m_object;
     Arch* m_arch;

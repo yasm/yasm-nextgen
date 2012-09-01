@@ -33,6 +33,7 @@
 #include <cassert>
 
 #include "llvm/ADT/StringRef.h"
+#include "yasmx/Basic/LLVM.h"
 #include "yasmx/Basic/SourceLocation.h"
 
 namespace yasm
@@ -187,9 +188,9 @@ public:
     bool isLiteral() const
     { return (m_flags & Literal) ? true : false; }
 
-    llvm::StringRef getLiteral() const
+    StringRef getLiteral() const
     {
-        return llvm::StringRef(getLiteralData(), getLength());
+        return StringRef(getLiteralData(), getLength());
     }
 
     /// For a literal token (numeric constant, string, etc), this

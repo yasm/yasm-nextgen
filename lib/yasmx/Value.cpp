@@ -359,7 +359,7 @@ Value::FinalizeScan(Expr& e, bool ssym_ok, int* pos)
             // Handle symrec-symrec by checking for (-1*symrec)
             // and symrec term pairs (where both symrecs are in the same
             // segment).
-            typedef llvm::SmallVector<int, 4> SymIndexes;
+            typedef SmallVector<int, 4> SymIndexes;
             SymIndexes relpos, subpos;
 
             // Scan for symrec and (-1*symrec) terms

@@ -49,7 +49,7 @@ class YASM_STD_EXPORT GasNumericParser : public NumericParser
 public:
     /// @param force_float  If true, always treat as decimal float;
     ///                     0[letter] prefix is optional
-    GasNumericParser(llvm::StringRef str,
+    GasNumericParser(StringRef str,
                      SourceLocation loc,
                      Preprocessor& pp,
                      bool force_float = false);

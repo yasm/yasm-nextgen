@@ -508,7 +508,7 @@ X86General::Output(Bytecode& bc, BytecodeOutput& bc_out)
     return true;
 }
 
-llvm::StringRef
+StringRef
 X86General::getType() const
 {
     return "yasm::arch::X86General";
@@ -536,8 +536,8 @@ X86General::Write(pugi::xml_node out) const
         append_child(root, "Imm", *m_imm);
 
     append_child(root, "SpecialPrefix",
-                 llvm::Twine::utohexstr(m_special_prefix).str());
-    append_child(root, "REX", llvm::Twine::utohexstr(m_rex).str());
+                 Twine::utohexstr(m_special_prefix).str());
+    append_child(root, "REX", Twine::utohexstr(m_rex).str());
     if (m_default_rel)
         root.append_attribute("default_rel") = true;
     const char* postop = NULL;

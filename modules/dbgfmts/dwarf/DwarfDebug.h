@@ -55,11 +55,11 @@ public:
     DwarfDebug(const DebugFormatModule& module, Object& object);
     ~DwarfDebug();
 
-    static llvm::StringRef getName() { return "DWARF debugging format"; }
-    static llvm::StringRef getKeyword() { return "dwarf"; }
+    static StringRef getName() { return "DWARF debugging format"; }
+    static StringRef getKeyword() { return "dwarf"; }
     static bool isOkObject(Object& object) { return true; }
 
-    void AddDirectives(Directives& dirs, llvm::StringRef parser);
+    void AddDirectives(Directives& dirs, StringRef parser);
     void Generate(ObjectFormat& objfmt,
                   SourceManager& smgr,
                   DiagnosticsEngine& diags);
@@ -78,12 +78,12 @@ public:
     bool gotFile() { return !m_filenames.empty(); }
 
 protected:
-    void AddCfiDirectives(Directives& dirs, llvm::StringRef parser);
+    void AddCfiDirectives(Directives& dirs, StringRef parser);
     void GenerateCfi(ObjectFormat& objfmt,
                      SourceManager& smgr,
                      DiagnosticsEngine& diags);
 
-    void AddDebugDirectives(Directives& dirs, llvm::StringRef parser);
+    void AddDebugDirectives(Directives& dirs, StringRef parser);
     void GenerateDebug(ObjectFormat& objfmt,
                        SourceManager& smgr,
                        DiagnosticsEngine& diags);
@@ -178,7 +178,7 @@ private:
     // Generate CFI section.
     void GenerateCfiSection(ObjectFormat& ofmt,
                             DiagnosticsEngine& diags,
-                            llvm::StringRef sectname,
+                            StringRef sectname,
                             bool eh_frame);
 
     /// Generate .debug_line section.
@@ -243,9 +243,9 @@ private:
     /// @param tail     end of data
     void setHeadEnd(Location head, Location tail);
 
-    size_t AddFile(unsigned long filenum, llvm::StringRef pathname);
+    size_t AddFile(unsigned long filenum, StringRef pathname);
     size_t AddFile(const FileEntry* file);
-    unsigned long AddDir(llvm::StringRef dirname);
+    unsigned long AddDir(StringRef dirname);
 };
 
 class YASM_STD_EXPORT DwarfPassDebug : public DwarfDebug
@@ -256,8 +256,8 @@ public:
     {}
     ~DwarfPassDebug();
 
-    static llvm::StringRef getName() { return "DWARF passthrough only"; }
-    static llvm::StringRef getKeyword() { return "dwarfpass"; }
+    static StringRef getName() { return "DWARF passthrough only"; }
+    static StringRef getKeyword() { return "dwarfpass"; }
     static bool isOkObject(Object& object) { return true; }
 
     void Generate(ObjectFormat& objfmt,
@@ -273,11 +273,11 @@ public:
     {}
     ~CfiDebug();
 
-    static llvm::StringRef getName() { return "CFI information only"; }
-    static llvm::StringRef getKeyword() { return "cfi"; }
+    static StringRef getName() { return "CFI information only"; }
+    static StringRef getKeyword() { return "cfi"; }
     static bool isOkObject(Object& object) { return true; }
 
-    void AddDirectives(Directives& dirs, llvm::StringRef parser);
+    void AddDirectives(Directives& dirs, StringRef parser);
     void Generate(ObjectFormat& objfmt,
                   SourceManager& smgr,
                   DiagnosticsEngine& diags);

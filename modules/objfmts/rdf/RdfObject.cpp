@@ -75,19 +75,19 @@ RdfObject::~RdfObject()
 {
 }
 
-std::vector<llvm::StringRef>
+std::vector<StringRef>
 RdfObject::getDebugFormatKeywords()
 {
     static const char* keywords[] = {"null"};
     size_t keywords_size = sizeof(keywords)/sizeof(keywords[0]);
-    return std::vector<llvm::StringRef>(keywords, keywords+keywords_size);
+    return std::vector<StringRef>(keywords, keywords+keywords_size);
 }
 
 namespace {
 class RdfOutput : public BytecodeOutput
 {
 public:
-    RdfOutput(llvm::raw_ostream& os, Object& object, DiagnosticsEngine& diags);
+    RdfOutput(raw_ostream& os, Object& object, DiagnosticsEngine& diags);
     ~RdfOutput();
 
     void OutputSectionToMemory(Section& sect);
@@ -106,7 +106,7 @@ public:
     void DoOutputBytes(const Bytes& bytes, SourceLocation source);
 
 private:
-    llvm::raw_ostream& m_os;
+    raw_ostream& m_os;
 
     RdfSection* m_rdfsect;
     Object& m_object;
@@ -116,9 +116,7 @@ private:
 };
 } // anonymous namespace
 
-RdfOutput::RdfOutput(llvm::raw_ostream& os,
-                     Object& object,
-                     DiagnosticsEngine& diags)
+RdfOutput::RdfOutput(raw_ostream& os, Object& object, DiagnosticsEngine& diags)
     : BytecodeOutput(diags)
     , m_os(os)
     , m_object(object)
@@ -398,7 +396,7 @@ RdfOutput::OutputSymbol(Symbol& sym, bool all_syms, unsigned int* indx)
         return;
     }
 
-    llvm::StringRef name = sym.getName();
+    StringRef name = sym.getName();
     size_t len = name.size();
 
     if (len > EXIM_LABEL_MAX-1)
@@ -523,7 +521,7 @@ RdfOutput::OutputBSS()
 }
 
 void
-RdfObject::Output(llvm::raw_fd_ostream& os,
+RdfObject::Output(raw_fd_ostream& os,
                   bool all_syms,
                   DebugFormat& dbgfmt,
                   DiagnosticsEngine& diags)
@@ -655,7 +653,7 @@ RdfObject::Output(llvm::raw_fd_ostream& os,
 }
 
 bool
-RdfObject::Taste(const llvm::MemoryBuffer& in,
+RdfObject::Taste(const MemoryBuffer& in,
                  /*@out@*/ std::string* arch_keyword,
                  /*@out@*/ std::string* machine)
 {
@@ -690,7 +688,7 @@ NoAddSpan(Bytecode& bc,
 bool
 RdfObject::Read(SourceManager& sm, DiagnosticsEngine& diags)
 {
-    const llvm::MemoryBuffer& in = *sm.getBuffer(sm.getMainFileID());
+    const MemoryBuffer& in = *sm.getBuffer(sm.getMainFileID());
     InputBuffer inbuf(in);
 
     // Read file header
@@ -746,7 +744,7 @@ RdfObject::Read(SourceManager& sm, DiagnosticsEngine& diags)
         if (rsect->type == RdfSection::RDF_BSS)
         {
             Bytecode& gap = section->AppendGap(size, SourceLocation());
-            llvm::IntrusiveRefCntPtr<DiagnosticIDs> diagids(new DiagnosticIDs);
+            IntrusiveRefCntPtr<DiagnosticIDs> diagids(new DiagnosticIDs);
             DiagnosticsEngine nodiags(diagids);
             gap.CalcLen(NoAddSpan, nodiags); // force length calculation
         }
@@ -796,7 +794,7 @@ RdfObject::Read(SourceManager& sm, DiagnosticsEngine& diags)
                 unsigned long value = ReadU32(recbuf);
                 /*unsigned int align = */ReadU16(recbuf);
                 size_t namelen = recbuf.getReadableSize();
-                llvm::StringRef symname(
+                StringRef symname(
                     reinterpret_cast<const char*>(recbuf.Read(namelen)),
                     namelen-1);
 
@@ -821,7 +819,7 @@ RdfObject::Read(SourceManager& sm, DiagnosticsEngine& diags)
                 /*unsigned int flags = */ReadU8(recbuf);
                 unsigned int scnum = ReadU16(recbuf);
                 size_t namelen = recbuf.getReadableSize();
-                llvm::StringRef symname(
+                StringRef symname(
                     reinterpret_cast<const char*>(recbuf.Read(namelen)),
                     namelen-1);
 
@@ -844,7 +842,7 @@ RdfObject::Read(SourceManager& sm, DiagnosticsEngine& diags)
                 unsigned int scnum = ReadU8(recbuf);
                 unsigned long value = ReadU32(recbuf);
                 size_t namelen = recbuf.getReadableSize();
-                llvm::StringRef symname(
+                StringRef symname(
                     reinterpret_cast<const char*>(recbuf.Read(namelen)),
                     namelen-1);
 
@@ -884,8 +882,7 @@ RdfObject::Read(SourceManager& sm, DiagnosticsEngine& diags)
                     new Section(".bss", false, true, SourceLocation()));
                 Bytecode& gap =
                     section->AppendGap(size, SourceLocation());
-                llvm::IntrusiveRefCntPtr<DiagnosticIDs>
-                    diagids(new DiagnosticIDs);
+                IntrusiveRefCntPtr<DiagnosticIDs> diagids(new DiagnosticIDs);
                 DiagnosticsEngine nodiags(diagids);
                 gap.CalcLen(NoAddSpan, nodiags); // force length calculation
 
@@ -969,7 +966,7 @@ RdfObject::Read(SourceManager& sm, DiagnosticsEngine& diags)
 }
 
 Section*
-RdfObject::AppendSection(llvm::StringRef name,
+RdfObject::AppendSection(StringRef name,
                          SourceLocation source,
                          DiagnosticsEngine& diags)
 {
@@ -1004,7 +1001,7 @@ RdfObject::AppendSection(llvm::StringRef name,
 Section*
 RdfObject::AddDefaultSection()
 {
-    llvm::IntrusiveRefCntPtr<DiagnosticIDs> diagids(new DiagnosticIDs);
+    IntrusiveRefCntPtr<DiagnosticIDs> diagids(new DiagnosticIDs);
     DiagnosticsEngine diags(diagids);
     Section* section = AppendSection(".text", SourceLocation(), diags);
     section->setDefault(true);
@@ -1050,7 +1047,7 @@ RdfObject::DirSection(DirectiveInfo& info, DiagnosticsEngine& diags)
                      diag::err_value_string_or_id);
         return;
     }
-    llvm::StringRef sectname = sectname_nv.getString();
+    StringRef sectname = sectname_nv.getString();
 
     Section* sect = m_object.FindSection(sectname);
     bool first = true;
@@ -1124,12 +1121,12 @@ RdfObject::DirSection(DirectiveInfo& info, DiagnosticsEngine& diags)
 }
 
 void
-RdfObject::AddLibOrModule(llvm::StringRef name,
+RdfObject::AddLibOrModule(StringRef name,
                           bool lib,
                           SourceLocation name_source,
                           DiagnosticsEngine& diags)
 {
-    llvm::StringRef name2 = name;
+    StringRef name2 = name;
     if (name2.size() > MODLIB_NAME_MAX)
     {
         diags.Report(name_source, diag::warn_name_too_long) << MODLIB_NAME_MAX;
@@ -1157,7 +1154,7 @@ RdfObject::DirModule(DirectiveInfo& info, DiagnosticsEngine& diags)
 }
 
 void
-RdfObject::AddDirectives(Directives& dirs, llvm::StringRef parser)
+RdfObject::AddDirectives(Directives& dirs, StringRef parser)
 {
     static const Directives::Init<RdfObject> nasm_dirs[] =
     {

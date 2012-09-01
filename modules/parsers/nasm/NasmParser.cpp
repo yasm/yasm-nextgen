@@ -203,7 +203,7 @@ NasmParser::Parse(Object& object, Directives& dirs, DiagnosticsEngine& diags)
         int altline = nasm::nasm_src_get(&linnum, &file_name);
         if (altline != 0) {
             lineinc = (altline != -1 || lineinc != 1);
-            llvm::SmallString<64> linestr;
+            SmallString<64> linestr;
             llvm::raw_svector_ostream los(linestr);
             los << "%line " << linnum << '+' << lineinc << ' ' << file_name
                 << '\n';
@@ -229,7 +229,7 @@ NasmParser::Parse(Object& object, Directives& dirs, DiagnosticsEngine& diags)
         sm.getBuffer(sm.getMainFileID())->getBufferIdentifier();
     sm.clearIDTables();
     sm.createMainFileIDForMemBuffer(
-        llvm::MemoryBuffer::getMemBufferCopy(result, filename));
+        MemoryBuffer::getMemBufferCopy(result, filename));
 
     // Get first token
     m_preproc.EnterMainSourceFile();
@@ -241,7 +241,7 @@ NasmParser::Parse(Object& object, Directives& dirs, DiagnosticsEngine& diags)
 }
 
 void
-NasmParser::AddDirectives(Directives& dirs, llvm::StringRef parser)
+NasmParser::AddDirectives(Directives& dirs, StringRef parser)
 {
     static const Directives::Init<NasmParser> nasm_dirs[] =
     {

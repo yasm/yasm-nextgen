@@ -33,14 +33,15 @@
 
 
 using namespace yasm;
+using llvm::APInt;
 
-static llvm::APInt staticbv(IntNum::BITVECT_NATIVE_SIZE, 0);
+static APInt staticbv(IntNum::BITVECT_NATIVE_SIZE, 0);
 
 static inline uint64_t
-Extract(const llvm::APInt& bv, unsigned int width, unsigned int lsb)
+Extract(const APInt& bv, unsigned int width, unsigned int lsb)
 {
     uint64_t v;
-    llvm::APInt::tcExtract(&v, 1, bv.getRawData(), width, lsb);
+    APInt::tcExtract(&v, 1, bv.getRawData(), width, lsb);
     return v;
 }
 
@@ -54,7 +55,7 @@ yasm::WriteLEB128(Bytes& bytes, const IntNum& intn, bool sign)
         return 1;
     }
 
-    const llvm::APInt* bv = intn.getBV(&staticbv);
+    const APInt* bv = intn.getBV(&staticbv);
     int size;
     if (sign)
         size = bv->getMinSignedBits();
@@ -77,7 +78,7 @@ yasm::SizeLEB128(const IntNum& intn, bool sign)
     if (intn.isZero())
         return 1;
 
-    const llvm::APInt* bv = intn.getBV(&staticbv);
+    const APInt* bv = intn.getBV(&staticbv);
     if (sign)
         return (bv->getMinSignedBits()+6)/7;
     else
@@ -88,7 +89,7 @@ IntNum
 yasm::ReadLEB128(InputBuffer& input, bool sign, /*@out@*/ unsigned long* size)
 {
     unsigned int nwords = 1;
-    llvm::SmallVector<uint64_t, 4> words(nwords);
+    SmallVector<uint64_t, 4> words(nwords);
     unsigned int nread = 0, i = 0;
 
     for (;;)
@@ -111,7 +112,7 @@ yasm::ReadLEB128(InputBuffer& input, bool sign, /*@out@*/ unsigned long* size)
     if (size)
         *size = nread;
 
-    llvm::APInt val(i, nwords, &words[0]);
+    APInt val(i, nwords, &words[0]);
     // Zero extend if needed to make positive number
     if (!sign && val.isNegative())
         val = val.zext(i+1);

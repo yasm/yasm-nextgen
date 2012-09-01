@@ -115,7 +115,7 @@ XdfSection::Write(Bytes& bytes, const Section& sect) const
 }
 
 void
-XdfSection::Read(const llvm::MemoryBuffer& in,
+XdfSection::Read(const MemoryBuffer& in,
                  unsigned long headpos,
                  /*@out@*/ unsigned long* name_sym_index,
                  /*@out@*/ IntNum* lma,

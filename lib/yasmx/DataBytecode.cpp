@@ -110,7 +110,7 @@ yasm::AppendData(BytecodeContainer& container,
 
 void
 yasm::AppendData(BytecodeContainer& container,
-                 llvm::StringRef str,
+                 StringRef str,
                  bool append_zero)
 {
     Bytes& fixed = container.FreshBytecode().getFixed();
@@ -122,7 +122,7 @@ yasm::AppendData(BytecodeContainer& container,
 
 void
 yasm::AppendData(BytecodeContainer& container,
-                 llvm::StringRef str,
+                 StringRef str,
                  unsigned int size,
                  bool append_zero)
 {

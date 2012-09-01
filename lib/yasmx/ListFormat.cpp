@@ -37,7 +37,7 @@ ListFormat::~ListFormat()
 }
 
 void
-ListFormat::AddDirectives(Directives& dirs, llvm::StringRef parser)
+ListFormat::AddDirectives(Directives& dirs, StringRef parser)
 {
 }
 
@@ -45,7 +45,7 @@ ListFormatModule::~ListFormatModule()
 {
 }
 
-llvm::StringRef
+StringRef
 ListFormatModule::getType() const
 {
     return "ListFormat";

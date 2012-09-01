@@ -168,19 +168,19 @@ public:
     /// Destructor.
     ~X86Arch();
 
-    void AddDirectives(Directives& dir, llvm::StringRef parser);
+    void AddDirectives(Directives& dir, StringRef parser);
 
-    bool setParser(llvm::StringRef parser);
-    bool setMachine(llvm::StringRef machine);
-    llvm::StringRef getMachine() const;
+    bool setParser(StringRef parser);
+    bool setMachine(StringRef machine);
+    StringRef getMachine() const;
     unsigned int getAddressSize() const;
 
-    bool setVar(llvm::StringRef var, unsigned long val);
+    bool setVar(StringRef var, unsigned long val);
 
-    InsnPrefix ParseCheckInsnPrefix(llvm::StringRef id,
+    InsnPrefix ParseCheckInsnPrefix(StringRef id,
                                     SourceLocation source,
                                     DiagnosticsEngine& diags) const;
-    RegTmod ParseCheckRegTmod(llvm::StringRef id,
+    RegTmod ParseCheckRegTmod(StringRef id,
                               SourceLocation source,
                               DiagnosticsEngine& diags) const;
 
@@ -206,7 +206,7 @@ public:
 
 private:
     // Returns false if cpuid not recognized
-    bool ParseCpu(llvm::StringRef cpuid);
+    bool ParseCpu(StringRef cpuid);
 
     // Directives
     void DirCpu(DirectiveInfo& info, DiagnosticsEngine& diags);

@@ -35,6 +35,7 @@
 #include <vector>
 
 #include "llvm/ADT/StringRef.h"
+#include "yasmx/Basic/LLVM.h"
 #include "yasmx/Config/export.h"
 
 #include "yasmx/Module.h"
@@ -66,7 +67,7 @@ public:
     const ParserModule& getModule() const { return m_module; }
 
     /// Add directive handlers.
-    virtual void AddDirectives(Directives& dirs, llvm::StringRef parser);
+    virtual void AddDirectives(Directives& dirs, StringRef parser);
 
     virtual Preprocessor& getPreprocessor() const = 0;
 
@@ -98,7 +99,7 @@ public:
 
     /// Get the module type.
     /// @return "Parser".
-    llvm::StringRef getType() const;
+    StringRef getType() const;
 
     /// Parser factory function.
     /// @param diags        diagnostic reporting
@@ -117,8 +118,8 @@ public:
     ParserModuleImpl() {}
     ~ParserModuleImpl() {}
 
-    llvm::StringRef getName() const { return ParserImpl::getName(); }
-    llvm::StringRef getKeyword() const { return ParserImpl::getKeyword(); }
+    StringRef getName() const { return ParserImpl::getName(); }
+    StringRef getKeyword() const { return ParserImpl::getKeyword(); }
 
     std::auto_ptr<Parser> Create(DiagnosticsEngine& diags,
                                  SourceManager& sm,

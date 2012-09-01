@@ -54,17 +54,17 @@ Win32Object::~Win32Object()
 {
 }
 
-std::vector<llvm::StringRef>
+std::vector<StringRef>
 Win32Object::getDebugFormatKeywords()
 {
     static const char* keywords[] =
         {"null", "dwarf", "dwarfpass", "dwarf2", "dwarf2pass", "cv8"};
     size_t keywords_size = sizeof(keywords)/sizeof(keywords[0]);
-    return std::vector<llvm::StringRef>(keywords, keywords+keywords_size);
+    return std::vector<StringRef>(keywords, keywords+keywords_size);
 }
 
 void
-Win32Object::InitSymbols(llvm::StringRef parser)
+Win32Object::InitSymbols(StringRef parser)
 {
     CoffObject::InitSymbols(parser);
 
@@ -157,7 +157,7 @@ Win32Object::DirExport(DirectiveInfo& info, DiagnosticsEngine& diags)
             << name_nv.getValueRange();
         return;
     }
-    llvm::StringRef symname = name_nv.getId();
+    StringRef symname = name_nv.getId();
 
     // Reference exported symbol (to generate error if not declared)
     m_object.getSymbol(symname)->Use(info.getSource());
@@ -187,7 +187,7 @@ Win32Object::DirSafeSEH(DirectiveInfo& info, DiagnosticsEngine& diags)
             << name_nv.getValueRange();
         return;
     }
-    llvm::StringRef symname = name_nv.getId();
+    StringRef symname = name_nv.getId();
 
     // Reference symbol (to generate error if not declared)
     SymbolRef sym = m_object.getSymbol(symname);
@@ -212,7 +212,7 @@ Win32Object::DirSafeSEH(DirectiveInfo& info, DiagnosticsEngine& diags)
 }
 
 void
-Win32Object::AddDirectives(Directives& dirs, llvm::StringRef parser)
+Win32Object::AddDirectives(Directives& dirs, StringRef parser)
 {
     static const Directives::Init<Win32Object> gas_dirs[] =
     {
@@ -235,7 +235,7 @@ Win32Object::AddDirectives(Directives& dirs, llvm::StringRef parser)
 }
 
 bool
-Win32Object::InitSection(llvm::StringRef name,
+Win32Object::InitSection(StringRef name,
                          Section& section,
                          CoffSection* coffsect,
                          SourceLocation source,

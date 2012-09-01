@@ -31,12 +31,11 @@
 ///
 #include <vector>
 
+#include "yasmx/Basic/LLVM.h"
 #include "yasmx/Config/export.h"
 #include "yasmx/Support/EndianState.h"
 #include "yasmx/DebugDumper.h"
 
-
-namespace llvm { class raw_ostream; }
 
 namespace yasm
 {
@@ -116,7 +115,7 @@ Bytes::Write(const unsigned char* buf, size_type n)
 /// @param bytes bytes
 /// @return Output stream
 YASM_LIB_EXPORT
-llvm::raw_ostream& operator<< (llvm::raw_ostream& os, const Bytes& bytes);
+raw_ostream& operator<< (raw_ostream& os, const Bytes& bytes);
 
 /// Specialized swap for algorithms.
 inline void

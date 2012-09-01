@@ -37,16 +37,16 @@ using namespace yasm;
 namespace {
 struct SawEqu
 {
-    yasm::Symbol* sym;
+    Symbol* sym;
     int depth_delta;
     int end_n;
 };
 
 class MatchSawEqu
 {
-    yasm::Symbol* m_sym;
+    Symbol* m_sym;
 public:
-    MatchSawEqu(yasm::Symbol* sym) : m_sym(sym) {}
+    MatchSawEqu(Symbol* sym) : m_sym(sym) {}
     bool operator() (SawEqu& sawequ) { return sawequ.sym == m_sym; }
 };
 } // anonymous namespace
@@ -56,8 +56,8 @@ yasm::ExpandEqu(Expr& e)
 {
     if (e.isEmpty())
         return true;
-    llvm::SmallVector<SawEqu, 8> seen;
-    yasm::ExprTerms& terms = e.getTerms();
+    SmallVector<SawEqu, 8> seen;
+    ExprTerms& terms = e.getTerms();
 
     int n = terms.size()-1;
     while (n >= 0)

@@ -162,7 +162,7 @@ X86Register::getSize() const
 }
 
 void
-X86Register::Put(llvm::raw_ostream& os) const
+X86Register::Put(raw_ostream& os) const
 {
     static const char *name8[] = {"al","cl","dl","bl","ah","ch","dh","bh"};
     static const char *name8x[] =
@@ -234,7 +234,7 @@ pugi::xml_node
 X86Register::Write(pugi::xml_node out) const
 {
     pugi::xml_node root = out.append_child("X86Register");
-    llvm::SmallString<256> ss;
+    SmallString<256> ss;
     llvm::raw_svector_ostream oss(ss);
     Put(oss);
     oss << '\0';
@@ -267,7 +267,7 @@ X86SegmentRegister::~X86SegmentRegister()
 }
 
 void
-X86SegmentRegister::Put(llvm::raw_ostream& os) const
+X86SegmentRegister::Put(raw_ostream& os) const
 {
     static const char *name[] = {"es","cs","ss","ds","fs","gs"};
     os << name[m_type];
@@ -278,7 +278,7 @@ pugi::xml_node
 X86SegmentRegister::Write(pugi::xml_node out) const
 {
     pugi::xml_node root = out.append_child("X86SegReg");
-    llvm::SmallString<256> ss;
+    SmallString<256> ss;
     llvm::raw_svector_ostream oss(ss);
     Put(oss);
     oss << '\0';
@@ -289,7 +289,7 @@ X86SegmentRegister::Write(pugi::xml_node out) const
 #endif // WITH_XML
 
 void
-X86TargetModifier::Put(llvm::raw_ostream& os) const
+X86TargetModifier::Put(raw_ostream& os) const
 {
     switch (m_type)
     {
@@ -306,7 +306,7 @@ pugi::xml_node
 X86TargetModifier::Write(pugi::xml_node out) const
 {
     pugi::xml_node root = out.append_child("X86TargetMod");
-    llvm::SmallString<256> ss;
+    SmallString<256> ss;
     llvm::raw_svector_ostream oss(ss);
     Put(oss);
     oss << '\0';
@@ -532,7 +532,7 @@ to,	TARGETMOD,	0,	X86TargetModifier::TO,		0
 %%
 
 Arch::RegTmod
-X86Arch::ParseCheckRegTmod(llvm::StringRef id,
+X86Arch::ParseCheckRegTmod(StringRef id,
                            SourceLocation source,
                            DiagnosticsEngine& diags) const
 {

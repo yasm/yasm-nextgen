@@ -60,7 +60,7 @@ X86Arch::X86Arch(const ArchModule& module)
 }
 
 bool
-X86Arch::setParser(llvm::StringRef parser)
+X86Arch::setParser(StringRef parser)
 {
     if (parser.equals_lower("nasm"))
         m_parser = PARSER_NASM;
@@ -75,7 +75,7 @@ X86Arch::setParser(llvm::StringRef parser)
 }
 
 bool
-X86Arch::setMachine(llvm::StringRef machine)
+X86Arch::setMachine(StringRef machine)
 {
     if (machine.equals_lower("x86"))
         m_amd64_machine = false;
@@ -90,7 +90,7 @@ X86Arch::~X86Arch()
 {
 }
 
-llvm::StringRef
+StringRef
 X86Arch::getMachine() const
 {
     if (m_amd64_machine)
@@ -120,7 +120,7 @@ X86Arch::getAddressSize() const
 }
 
 bool
-X86Arch::setVar(llvm::StringRef var, unsigned long val)
+X86Arch::setVar(StringRef var, unsigned long val)
 {
     if (var.equals_lower("mode_bits"))
     {
@@ -156,7 +156,7 @@ X86Arch::DirCpu(DirectiveInfo& info, DiagnosticsEngine& diags)
             Expr e = nv->getExpr(info.getObject());
             if (e.isIntNum())
             {
-                llvm::SmallString<128> ss;
+                SmallString<128> ss;
                 llvm::raw_svector_ostream oss(ss);
                 oss << e.getIntNum().getUInt();
                 recognized = ParseCpu(oss.str());
@@ -225,7 +225,7 @@ X86Arch::DirDefault(DirectiveInfo& info, DiagnosticsEngine& diags)
     {
         if (nv->isId())
         {
-            llvm::StringRef id = nv->getId();
+            StringRef id = nv->getId();
             if (id.equals_lower("rel"))
             {
                 if (m_mode_bits == 64)
@@ -482,7 +482,7 @@ X86Arch::getFill() const
 }
 
 void
-X86Arch::AddDirectives(Directives& dirs, llvm::StringRef parser)
+X86Arch::AddDirectives(Directives& dirs, StringRef parser)
 {
     static const Directives::Init<X86Arch> nasm_dirs[] =
     {

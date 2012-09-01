@@ -147,11 +147,10 @@ X86Common::Write(pugi::xml_node out) const
     root.append_attribute("addrsize") = static_cast<unsigned int>(m_addrsize);
     root.append_attribute("opersize") = static_cast<unsigned int>(m_opersize);
     root.append_attribute("lockrep") =
-        llvm::Twine::utohexstr(static_cast<unsigned int>(m_lockrep_pre))
+        Twine::utohexstr(static_cast<unsigned int>(m_lockrep_pre))
         .str().c_str();
     root.append_attribute("acqrel") =
-        llvm::Twine::utohexstr(static_cast<unsigned int>(m_acqrel_pre))
-        .str().c_str();
+        Twine::utohexstr(static_cast<unsigned int>(m_acqrel_pre)).str().c_str();
     root.append_attribute("bits") = static_cast<unsigned int>(m_mode_bits);
     return root;
 }

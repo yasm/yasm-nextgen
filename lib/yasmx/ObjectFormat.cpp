@@ -36,7 +36,7 @@ ObjectFormat::~ObjectFormat()
 }
 
 void
-ObjectFormat::AddDirectives(Directives& dirs, llvm::StringRef parser)
+ObjectFormat::AddDirectives(Directives& dirs, StringRef parser)
 {
 }
 
@@ -48,7 +48,7 @@ ObjectFormat::Read(SourceManager& sm, DiagnosticsEngine& diags)
 }
 
 void
-ObjectFormat::InitSymbols(llvm::StringRef parser)
+ObjectFormat::InitSymbols(StringRef parser)
 {
 }
 
@@ -56,7 +56,7 @@ ObjectFormatModule::~ObjectFormatModule()
 {
 }
 
-llvm::StringRef
+StringRef
 ObjectFormatModule::getType() const
 {
     return "ObjectFormat";

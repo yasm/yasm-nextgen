@@ -47,7 +47,7 @@ namespace parser
 class YASM_STD_EXPORT NasmNumericParser : public NumericParser
 {
 public:
-    NasmNumericParser(llvm::StringRef str,
+    NasmNumericParser(StringRef str,
                       SourceLocation loc,
                       Preprocessor& pp);
     virtual ~NasmNumericParser();

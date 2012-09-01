@@ -108,7 +108,7 @@ public:
     /// Convert a bytecode into its byte representation.
     bool Output(Bytecode& bc, BytecodeOutput& bc_out);
 
-    llvm::StringRef getType() const;
+    StringRef getType() const;
 
     MultipleBytecode* clone() const;
 
@@ -161,7 +161,7 @@ public:
     /// Convert a bytecode into its byte representation.
     bool Output(Bytecode& bc, BytecodeOutput& bc_out);
 
-    llvm::StringRef getType() const;
+    StringRef getType() const;
 
     FillBytecode* clone() const;
 
@@ -440,7 +440,7 @@ MultipleBytecode::Output(Bytecode& bc, BytecodeOutput& bc_out)
     return true;
 }
 
-llvm::StringRef
+StringRef
 MultipleBytecode::getType() const
 {
     return "yasm::MultipleBytecode";
@@ -564,7 +564,7 @@ FillBytecode::Output(Bytecode& bc, BytecodeOutput& bc_out)
     return true;
 }
 
-llvm::StringRef
+StringRef
 FillBytecode::getType() const
 {
     return "yasm::FillBytecode";

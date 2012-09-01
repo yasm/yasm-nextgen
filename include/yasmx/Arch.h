@@ -34,14 +34,14 @@
 #include <utility>
 #include <vector>
 
-#include "llvm/ADT/StringRef.h"
+#include "yasmx/Basic/LLVM.h"
 #include "yasmx/Config/export.h"
 #include "yasmx/DebugDumper.h"
 #include "yasmx/Location.h"
 #include "yasmx/Module.h"
 
 
-namespace llvm { class APFloat; class raw_ostream; }
+namespace llvm { class APFloat; }
 
 namespace yasm
 {
@@ -81,7 +81,7 @@ public:
 
     /// Print the register name.
     /// @param os   output stream
-    virtual void Put(llvm::raw_ostream& os) const = 0;
+    virtual void Put(raw_ostream& os) const = 0;
 
 #ifdef WITH_XML
     /// Write an XML representation.  For debugging purposes.
@@ -95,8 +95,7 @@ private:
     const Register& operator=(const Register&); // not implemented
 };
 
-inline llvm::raw_ostream& operator<<
-(llvm::raw_ostream& os, const Register& reg)
+inline raw_ostream& operator<< (raw_ostream& os, const Register& reg)
 {
     reg.Put(os);
     return os;
@@ -141,7 +140,7 @@ public:
 
     /// Print a segment register.  For debugging purposes.
     /// @param os   output stream
-    virtual void Put(llvm::raw_ostream& os) const = 0;
+    virtual void Put(raw_ostream& os) const = 0;
 
 #ifdef WITH_XML
     /// Write an XML representation.  For debugging purposes.
@@ -155,8 +154,7 @@ private:
     const SegmentRegister& operator=(const SegmentRegister&); // not implemented
 };
 
-inline llvm::raw_ostream& operator<<
-(llvm::raw_ostream& os, const SegmentRegister& segreg)
+inline raw_ostream& operator<< (raw_ostream& os, const SegmentRegister& segreg)
 {
     segreg.Put(os);
     return os;
@@ -282,22 +280,22 @@ public:
     const ArchModule& getModule() const { return m_module; }
 
     /// Add directive handlers.
-    virtual void AddDirectives(Directives& dirs, llvm::StringRef parser);
+    virtual void AddDirectives(Directives& dirs, StringRef parser);
 
     /// Set parser to use.
     /// @param parser       keyword of parser to use
     /// @return False if unrecognized parser.
-    virtual bool setParser(llvm::StringRef parser) = 0;
+    virtual bool setParser(StringRef parser) = 0;
 
     /// Set active machine.
     /// @param machine      keyword of machine to use; must be one in the
     ///                     list returned by get_machines().
     /// @return False if unrecognized machine.
-    virtual bool setMachine(llvm::StringRef machine) = 0;
+    virtual bool setMachine(StringRef machine) = 0;
 
     /// Get architecture's active machine name.
     /// @return Active machine name.
-    virtual llvm::StringRef getMachine() const = 0;
+    virtual StringRef getMachine() const = 0;
 
     /// Get architecture's active address size, in bits.
     /// @return Active address size (in bits).
@@ -307,7 +305,7 @@ public:
     /// @param var  variable name
     /// @param val  value to set
     /// @return True on success, false on failure (variable does not exist).
-    virtual bool setVar(llvm::StringRef var, unsigned long val) = 0;
+    virtual bool setVar(StringRef var, unsigned long val) = 0;
 
     /// Determine if a custom parser (ParseInsn) should be used.  The default
     /// implementation returns false.
@@ -338,7 +336,7 @@ public:
     /// @param prefix       for prefixes, yasm_arch-specific value is
     ///                     returned (and 0 otherwise)
     /// @return Identifier type (empty if unrecognized)
-    virtual InsnPrefix ParseCheckInsnPrefix(llvm::StringRef id,
+    virtual InsnPrefix ParseCheckInsnPrefix(StringRef id,
                                             SourceLocation source,
                                             DiagnosticsEngine& diags)
         const = 0;
@@ -348,7 +346,7 @@ public:
     /// identifiers should return empty.
     /// @param id           identifier as in the input file
     /// @return Identifier type (empty if unrecognized)
-    virtual RegTmod ParseCheckRegTmod(llvm::StringRef id,
+    virtual RegTmod ParseCheckRegTmod(StringRef id,
                                       SourceLocation source,
                                       DiagnosticsEngine& diags) const = 0;
 
@@ -394,7 +392,7 @@ public:
 
     /// Get the module type.
     /// @return "Arch".
-    llvm::StringRef getType() const;
+    StringRef getType() const;
 
     /// Get the word size of an architecture.
     /// @return Word size (in bits).
@@ -407,7 +405,7 @@ public:
     /// Vector of machine keyword/name pairs.  The first element in the pair
     /// is the keyword used to select the machine with set_machine(), and the
     /// second element is a one-line description of the machine.
-    typedef std::vector<std::pair<llvm::StringRef, llvm::StringRef> > MachineNames;
+    typedef std::vector<std::pair<StringRef, StringRef> > MachineNames;
 
     /// Get available machines.
     /// A number of different machine types may be associated with a single
@@ -430,8 +428,8 @@ public:
     ArchModuleImpl() {}
     ~ArchModuleImpl() {}
 
-    llvm::StringRef getName() const { return ArchImpl::getName(); }
-    llvm::StringRef getKeyword() const { return ArchImpl::getKeyword(); }
+    StringRef getName() const { return ArchImpl::getName(); }
+    StringRef getKeyword() const { return ArchImpl::getKeyword(); }
 
     unsigned int getWordSize() const { return ArchImpl::getWordSize(); }
     unsigned int getMinInsnLen() const

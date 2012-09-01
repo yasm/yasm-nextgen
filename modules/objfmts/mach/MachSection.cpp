@@ -36,7 +36,7 @@ using namespace yasm::objfmt;
 
 const char* MachSection::key = "objfmt::MachSection";
 
-MachSection::MachSection(llvm::StringRef segname_, llvm::StringRef sectname_)
+MachSection::MachSection(StringRef segname_, StringRef sectname_)
     : scnum(0)
     , segname(segname_)
     , sectname(sectname_)

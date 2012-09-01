@@ -27,9 +27,9 @@
 // POSSIBILITY OF SUCH DAMAGE.
 //
 #include <cctype>
+#include <string>
 
-#include "llvm/ADT/SmallVector.h"
-#include "llvm/ADT/StringRef.h"
+#include "yasmx/Basic/LLVM.h"
 #include "yasmx/Config/export.h"
 
 
@@ -54,7 +54,7 @@ class YASM_STD_EXPORT GasStringParser
     bool m_had_error;
 
 public:
-    GasStringParser(llvm::StringRef str, SourceLocation loc, Preprocessor& pp);
+    GasStringParser(StringRef str, SourceLocation loc, Preprocessor& pp);
 
     bool hadError() const { return m_had_error; }
 
@@ -65,7 +65,7 @@ public:
     /// Get the string data into a SmallVector.
     /// @note The returned StringRef may not point to the supplied buffer
     ///       if a copy can be avoided.
-    llvm::StringRef getString(llvm::SmallVectorImpl<char>& buffer) const;
+    StringRef getString(SmallVectorImpl<char>& buffer) const;
 
     /// Convert this string literal value to an IntNum.
     /// This follows the NASM "character constant" conversion rules.

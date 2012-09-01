@@ -35,8 +35,8 @@
 
 using namespace yasm;
 
-llvm::raw_ostream&
-yasm::operator<< (llvm::raw_ostream& os, const Bytes& bytes)
+raw_ostream&
+yasm::operator<< (raw_ostream& os, const Bytes& bytes)
 {
     if (bytes.empty())
         return os;
@@ -66,7 +66,7 @@ Bytes::Write(size_type n, unsigned char v)
 pugi::xml_node
 Bytes::Write(pugi::xml_node out) const
 {
-    llvm::SmallString<128> ss;
+    SmallString<128> ss;
     llvm::raw_svector_ostream oss(ss);
     for (size_type i=0; i<size(); ++i)
     {

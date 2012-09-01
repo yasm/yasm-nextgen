@@ -32,7 +32,7 @@
 #include <memory>
 #include <string>
 
-#include "llvm/ADT/StringRef.h"
+#include "yasmx/Basic/LLVM.h"
 #include "yasmx/Config/export.h"
 #include "yasmx/Config/functional.h"
 #include "yasmx/Parse/NameValue.h"
@@ -67,7 +67,7 @@ public:
     /// @param needsvalue   True if name requires value, false if it must not
     ///                     have a value.
     /// @param helper       Helper function
-    void Add(llvm::StringRef name, bool needsvalue, DirHelper helper);
+    void Add(StringRef name, bool needsvalue, DirHelper helper);
 
     /// Help parse a list of directive name/values.  Matches name=value
     /// (or just value) against each of the added helper functions.

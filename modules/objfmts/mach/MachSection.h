@@ -33,8 +33,6 @@
 #include "yasmx/SymbolRef.h"
 
 
-namespace llvm { class MemoryBuffer; }
-
 namespace yasm
 {
 
@@ -48,7 +46,7 @@ struct YASM_STD_EXPORT MachSection : public AssocData
 {
     static const char* key;
 
-    MachSection(llvm::StringRef segname_, llvm::StringRef sectname_);
+    MachSection(StringRef segname_, StringRef sectname_);
     ~MachSection();
 #ifdef WITH_XML
     pugi::xml_node Write(pugi::xml_node out) const;

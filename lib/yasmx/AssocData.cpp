@@ -105,7 +105,7 @@ AssocDataContainer::Write(pugi::xml_node out) const
         pugi::xml_node node = append_data(out, *i->value);
         if (node.attribute("key").empty())
         {
-            llvm::SmallString<128> ss;
+            SmallString<128> ss;
             llvm::raw_svector_ostream oss(ss);
             oss << (uint64_t)(i->key) << '\0';
             node.append_attribute("key") = oss.str().data();

@@ -29,7 +29,7 @@
 /// POSSIBILITY OF SUCH DAMAGE.
 /// @endlicense
 ///
-#include "llvm/ADT/StringRef.h"
+#include "yasmx/Basic/LLVM.h"
 #include "yasmx/Config/export.h"
 
 
@@ -48,15 +48,15 @@ public:
 
     /// Get the one-line description of the module.
     /// @return One-line description of module.
-    virtual llvm::StringRef getName() const = 0;
+    virtual StringRef getName() const = 0;
 
     /// Get the keyword used to select the module.
     /// @return Module keyword.
-    virtual llvm::StringRef getKeyword() const = 0;
+    virtual StringRef getKeyword() const = 0;
 
     /// Get the module type name (e.g. "ObjectFormat", "DebugFormat", ...).
     /// @return Module typename.
-    virtual llvm::StringRef getType() const = 0;
+    virtual StringRef getType() const = 0;
 
 private:
     Module(const Module&);                  // not implemented

@@ -51,10 +51,10 @@ public:
                 HeaderSearch& headers);
     ~NasmPreproc();
 
-    virtual void PreInclude(llvm::StringRef filename);
-    virtual void PredefineMacro(llvm::StringRef macronameval);
-    virtual void UndefineMacro(llvm::StringRef macroname);
-    virtual void DefineBuiltin(llvm::StringRef macronameval);
+    virtual void PreInclude(StringRef filename);
+    virtual void PredefineMacro(StringRef macronameval);
+    virtual void UndefineMacro(StringRef macroname);
+    virtual void DefineBuiltin(StringRef macronameval);
 
     struct Predef
     {
@@ -66,8 +66,7 @@ public:
 
 protected:
     virtual void RegisterBuiltinMacros();
-    virtual Lexer* CreateLexer(FileID fid,
-                               const llvm::MemoryBuffer* input_buffer);
+    virtual Lexer* CreateLexer(FileID fid, const MemoryBuffer* input_buffer);
 
 private:
     /// Identifiers for builtin macros and other builtins.

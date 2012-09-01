@@ -32,7 +32,7 @@
 //
 #include <cctype>
 
-#include "llvm/ADT/StringRef.h"
+#include "yasmx/Basic/LLVM.h"
 #include "yasmx/Config/export.h"
 
 
@@ -53,7 +53,7 @@ class IntNum;
 class YASM_LIB_EXPORT NumericParser
 {
 public:
-    NumericParser(llvm::StringRef str);
+    NumericParser(StringRef str);
     virtual ~NumericParser();
 
     bool hadError() const { return m_had_error; }

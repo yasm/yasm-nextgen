@@ -194,16 +194,16 @@ X86EffAddr::DoWrite(pugi::xml_node out) const
 {
     pugi::xml_node root = out.append_child("X86EffAddr");
     pugi::xml_node modrm = root.append_child("ModRM");
-    append_data(modrm, llvm::Twine::utohexstr(m_modrm).str());
+    append_data(modrm, Twine::utohexstr(m_modrm).str());
     modrm.append_attribute("need") = static_cast<bool>(m_need_modrm);
     modrm.append_attribute("valid") = static_cast<bool>(m_valid_modrm);
 
     pugi::xml_node sib = root.append_child("SIB");
-    append_data(sib, llvm::Twine::utohexstr(m_sib).str());
+    append_data(sib, Twine::utohexstr(m_sib).str());
     sib.append_attribute("need") = static_cast<bool>(m_need_sib);
     sib.append_attribute("valid") = static_cast<bool>(m_valid_sib);
     sib.append_attribute("vsibmode") =
-        (llvm::Twine::utohexstr(m_vsib_mode).str()).c_str();
+        (Twine::utohexstr(m_vsib_mode).str()).c_str();
     return root;
 }
 #endif // WITH_XML

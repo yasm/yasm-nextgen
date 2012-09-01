@@ -745,7 +745,7 @@ DwarfDebug::DirCfiSections(DirectiveInfo& info, DiagnosticsEngine& diags)
                          diag::err_value_string_or_id);
             return;
         }
-        llvm::StringRef name = i->getString();
+        StringRef name = i->getString();
         if (name == ".eh_frame")
             eh_frame = true;
         else if (name == ".debug_frame")
@@ -1289,7 +1289,7 @@ DwarfDebug::InitCfi(Arch& arch)
 }
 
 void
-DwarfDebug::AddCfiDirectives(Directives& dirs, llvm::StringRef parser)
+DwarfDebug::AddCfiDirectives(Directives& dirs, StringRef parser)
 {
     static const Directives::Init<DwarfDebug> gas_dirs[] =
     {
@@ -1336,7 +1336,7 @@ DwarfDebug::AddCfiDirectives(Directives& dirs, llvm::StringRef parser)
 void
 DwarfDebug::GenerateCfiSection(ObjectFormat& ofmt,
                                DiagnosticsEngine& diags,
-                               llvm::StringRef sectname,
+                               StringRef sectname,
                                bool eh_frame)
 {
     unsigned int align;

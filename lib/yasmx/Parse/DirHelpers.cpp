@@ -60,9 +60,7 @@ DirHelpers::~DirHelpers()
 }
 
 void
-DirHelpers::Add(llvm::StringRef name,
-                bool needsvalue,
-                DirHelper helper)
+DirHelpers::Add(StringRef name, bool needsvalue, DirHelper helper)
 {
     if (needsvalue)
         m_impl->m_value_helpers[name.lower()] = helper;

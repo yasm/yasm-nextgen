@@ -54,26 +54,26 @@ public:
     /// Destructor.
     ~BinObject();
 
-    void AddDirectives(Directives& dirs, llvm::StringRef parser);
+    void AddDirectives(Directives& dirs, StringRef parser);
 
-    void Output(llvm::raw_fd_ostream& os,
+    void Output(raw_fd_ostream& os,
                 bool all_syms,
                 DebugFormat& dbgfmt,
                 DiagnosticsEngine& diags);
 
     Section* AddDefaultSection();
-    Section* AppendSection(llvm::StringRef name,
+    Section* AppendSection(StringRef name,
                            SourceLocation source,
                            DiagnosticsEngine& diags);
 
-    static llvm::StringRef getName() { return "Flat format binary"; }
-    static llvm::StringRef getKeyword() { return "bin"; }
-    static llvm::StringRef getExtension() { return ""; }
+    static StringRef getName() { return "Flat format binary"; }
+    static StringRef getKeyword() { return "bin"; }
+    static StringRef getExtension() { return ""; }
     static unsigned int getDefaultX86ModeBits() { return 16; }
-    static llvm::StringRef getDefaultDebugFormatKeyword() { return "null"; }
-    static std::vector<llvm::StringRef> getDebugFormatKeywords();
+    static StringRef getDefaultDebugFormatKeyword() { return "null"; }
+    static std::vector<StringRef> getDebugFormatKeywords();
     static bool isOkObject(Object& object) { return true; }
-    static bool Taste(const llvm::MemoryBuffer& in,
+    static bool Taste(const MemoryBuffer& in,
                       /*@out@*/ std::string* arch_keyword,
                       /*@out@*/ std::string* machine)
     { return false; }

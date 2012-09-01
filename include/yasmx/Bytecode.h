@@ -33,6 +33,7 @@
 #include <memory>
 #include <vector>
 
+#include "yasmx/Basic/LLVM.h"
 #include "yasmx/Basic/SourceLocation.h"
 #include "yasmx/Config/export.h"
 #include "yasmx/Config/functional.h"
@@ -172,7 +173,7 @@ public:
 
         /// Get the type name of the bytecode contents.
         /// Implementations should return a known unique identifying name.
-        virtual llvm::StringRef getType() const = 0;
+        virtual StringRef getType() const = 0;
 
         virtual Contents* clone() const = 0;
 

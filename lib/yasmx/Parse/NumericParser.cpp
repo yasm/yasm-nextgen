@@ -36,8 +36,9 @@
 
 
 using namespace yasm;
+using llvm::APFloat;
 
-NumericParser::NumericParser(llvm::StringRef str)
+NumericParser::NumericParser(StringRef str)
     : m_digits_begin(str.begin())
     , m_digits_end(str.end())
     , m_is_float(false)
@@ -57,22 +58,21 @@ NumericParser::getIntegerValue(IntNum* val)
         val->Zero();
         return false;
     }
-    return val->setStr(llvm::StringRef(m_digits_begin,
-                                       m_digits_end-m_digits_begin),
+    return val->setStr(StringRef(m_digits_begin, m_digits_end-m_digits_begin),
                        m_radix);
 }
 
-llvm::APFloat
+APFloat
 NumericParser::getFloatValue(const llvm::fltSemantics& format,
                              bool* is_exact)
 {
-    llvm::SmallVector<char, 256> float_chars;
+    SmallVector<char, 256> float_chars;
     for (const char* ch = m_digits_begin; ch < m_digits_end; ++ch)
         float_chars.push_back(*ch);
 
     float_chars.push_back('\0');
 
-    llvm::APFloat val(format, llvm::APFloat::fcZero, false);
+    APFloat val(format, APFloat::fcZero, false);
 
     // avoid assert in APFloat on empty string
     if (float_chars.size() == 1)
@@ -82,12 +82,11 @@ NumericParser::getFloatValue(const llvm::fltSemantics& format,
         return val;
     }
 
-    llvm::APFloat::opStatus status =
-        val.convertFromString(&float_chars[0],
-                              llvm::APFloat::rmNearestTiesToEven);
+    APFloat::opStatus status =
+        val.convertFromString(&float_chars[0], APFloat::rmNearestTiesToEven);
 
     if (is_exact)
-        *is_exact = (status == llvm::APFloat::opOK);
+        *is_exact = (status == APFloat::opOK);
 
     return val;
 }

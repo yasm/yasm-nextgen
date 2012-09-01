@@ -85,7 +85,7 @@ ReadN(InputBuffer& input, int n, bool sign)
 
     // Read the buffer into an array of words
     unsigned int nwords = (n+63)/64;
-    llvm::SmallVector<uint64_t, 4> words(nwords);
+    SmallVector<uint64_t, 4> words(nwords);
 
     if (input.isBigEndian())
     {

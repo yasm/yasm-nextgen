@@ -33,6 +33,7 @@
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/raw_ostream.h"
 #include "pugixml/pugixml.h"
+#include "yasmx/Basic/LLVM.h"
 #endif // WITH_XML
 #include "yasmx/Config/export.h"
 
@@ -44,12 +45,12 @@ namespace yasm
 class YASM_LIB_EXPORT xml_writer_raw_ostream : public pugi::xml_writer
 {
 public:
-    xml_writer_raw_ostream(llvm::raw_ostream& os) : m_os(os) {}
+    xml_writer_raw_ostream(raw_ostream& os) : m_os(os) {}
     virtual ~xml_writer_raw_ostream();
     void write(const void* data, size_t size);
 
 private:
-    llvm::raw_ostream& m_os;
+    raw_ostream& m_os;
 };
 #endif // WITH_XML
 
@@ -80,7 +81,7 @@ pugi::xml_node append_data(pugi::xml_node node, const char* val);
 YASM_LIB_EXPORT
 pugi::xml_node append_data(pugi::xml_node node, const std::string& val);
 YASM_LIB_EXPORT
-pugi::xml_node append_data(pugi::xml_node node, llvm::StringRef val);
+pugi::xml_node append_data(pugi::xml_node node, StringRef val);
 YASM_LIB_EXPORT
 pugi::xml_node append_data(pugi::xml_node node, int val);
 YASM_LIB_EXPORT
@@ -110,7 +111,7 @@ pugi::xml_node append_child(pugi::xml_node node, const char* name, const char* v
 YASM_LIB_EXPORT
 pugi::xml_node append_child(pugi::xml_node node, const char* name, const std::string& val);
 YASM_LIB_EXPORT
-pugi::xml_node append_child(pugi::xml_node node, const char* name, llvm::StringRef val);
+pugi::xml_node append_child(pugi::xml_node node, const char* name, StringRef val);
 
 /// Helper functions to append a simple <tag>integer</tag> node.
 YASM_LIB_EXPORT

@@ -107,7 +107,7 @@ namespace {
 class MatchFileDir
 {
 public:
-    MatchFileDir(llvm::StringRef name, unsigned long dir)
+    MatchFileDir(StringRef name, unsigned long dir)
         : m_name(name), m_dir(dir)
     {}
 
@@ -119,13 +119,13 @@ public:
     }
 
 private:
-    llvm::StringRef m_name;
+    StringRef m_name;
     unsigned long m_dir;
 };
 } // anonymous namespace
 
 unsigned long
-DwarfDebug::AddDir(llvm::StringRef dirname)
+DwarfDebug::AddDir(StringRef dirname)
 {
     // Put the directory into the directory table (checking for duplicates)
     Dirs::iterator d =
@@ -166,9 +166,9 @@ DwarfDebug::AddFile(const FileEntry* file)
 }
 
 size_t
-DwarfDebug::AddFile(unsigned long filenum, llvm::StringRef pathname)
+DwarfDebug::AddFile(unsigned long filenum, StringRef pathname)
 {
-    llvm::StringRef dirname = llvm::sys::path::parent_path(pathname);
+    StringRef dirname = llvm::sys::path::parent_path(pathname);
     if (dirname.empty())
         dirname = ".";
     unsigned long dir = AddDir(dirname);
@@ -668,7 +668,7 @@ DwarfDebug::DirLoc(DirectiveInfo& info, DiagnosticsEngine& diags)
     bool in_is_stmt = false, in_isa = false, in_discriminator = false;
     while (nv != end)
     {
-        llvm::StringRef name = nv->getName();
+        StringRef name = nv->getName();
 
 restart:
         if (in_is_stmt)
@@ -752,7 +752,7 @@ restart:
         }
         else if (name.empty() && nv->isId())
         {
-            llvm::StringRef s = nv->getId();
+            StringRef s = nv->getId();
             if (s.equals_lower("is_stmt"))
                 in_is_stmt = true;
             else if (s.equals_lower("isa"))

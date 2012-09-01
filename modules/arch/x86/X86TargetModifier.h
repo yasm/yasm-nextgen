@@ -50,7 +50,7 @@ public:
 
     Type getType() const { return m_type; }
 
-    void Put(llvm::raw_ostream& os) const;
+    void Put(raw_ostream& os) const;
 #ifdef WITH_XML
     pugi::xml_node Write(pugi::xml_node out) const;
 #endif // WITH_XML

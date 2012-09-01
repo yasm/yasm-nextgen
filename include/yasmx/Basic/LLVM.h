@@ -39,7 +39,10 @@ namespace llvm {
   template <class Derived> class RefCountedBase;
   class RefCountedBaseVPTR;
 
+  class MemoryBuffer;
+
   class raw_ostream;
+  class raw_fd_ostream;
   // TODO: DenseMap, ...
 }
 
@@ -68,7 +71,10 @@ namespace yasm {
   using llvm::RefCountedBase;
   using llvm::RefCountedBaseVPTR;
 
+  using llvm::MemoryBuffer;
+
   using llvm::raw_ostream;
+  using llvm::raw_fd_ostream;
 } // end namespace yasm.
 
 #endif

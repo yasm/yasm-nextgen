@@ -59,7 +59,7 @@ namespace {
 class CoffOutput : public BytecodeStreamOutput
 {
 public:
-    CoffOutput(llvm::raw_ostream& os,
+    CoffOutput(raw_ostream& os,
                CoffObject& objfmt,
                Object& object,
                bool all_syms,
@@ -87,7 +87,7 @@ private:
 };
 } // anonymous namespace
 
-CoffOutput::CoffOutput(llvm::raw_ostream& os,
+CoffOutput::CoffOutput(raw_ostream& os,
                        CoffObject& objfmt,
                        Object& object,
                        bool all_syms,
@@ -508,7 +508,7 @@ CoffOutput::OutputSectionHeader(const Section& sect)
 }
 
 void
-CoffObject::Output(llvm::raw_fd_ostream& os,
+CoffObject::Output(raw_fd_ostream& os,
                    bool all_syms,
                    DebugFormat& dbgfmt,
                    DiagnosticsEngine& diags)

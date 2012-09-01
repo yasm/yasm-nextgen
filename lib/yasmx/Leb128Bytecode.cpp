@@ -70,7 +70,7 @@ public:
     /// Convert a bytecode into its byte representation.
     bool Output(Bytecode& bc, BytecodeOutput& bc_out);
 
-    llvm::StringRef getType() const;
+    StringRef getType() const;
 
     LEB128Bytecode* clone() const;
 
@@ -203,7 +203,7 @@ LEB128Bytecode::Output(Bytecode& bc, BytecodeOutput& bc_out)
     return true;
 }
 
-llvm::StringRef
+StringRef
 LEB128Bytecode::getType() const
 {
     return "yasm::LEB128Bytecode";

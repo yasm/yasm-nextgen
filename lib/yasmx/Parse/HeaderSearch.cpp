@@ -102,10 +102,10 @@ const char *DirectoryLookup::getName() const
 
 /// LookupFile - Lookup the specified file in this search path, returning it
 /// if it exists or returning null if not.
-const FileEntry *DirectoryLookup::LookupFile(llvm::StringRef Filename,
-                                                    HeaderSearch &HS) const
+const FileEntry *DirectoryLookup::LookupFile(StringRef Filename,
+                                             HeaderSearch &HS) const
 {
-  llvm::SmallString<1024> TmpDir;
+  SmallString<1024> TmpDir;
   // Concatenate the requested file onto the directory.
   // FIXME: Portability.  Filename concatenation should be in sys::Path.
   TmpDir += getDir()->getName();
@@ -126,7 +126,7 @@ const FileEntry *DirectoryLookup::LookupFile(llvm::StringRef Filename,
 /// non-null, indicates where the #including file is, in case a relative search
 /// is needed.
 const FileEntry *
-HeaderSearch::LookupFile(llvm::StringRef Filename,
+HeaderSearch::LookupFile(StringRef Filename,
                          bool isAngled,
                          const DirectoryLookup *FromDir,
                          const DirectoryLookup *&CurDir,
@@ -149,7 +149,7 @@ HeaderSearch::LookupFile(llvm::StringRef Filename,
   // a subsequent include of "baz.h" should resolve to "whatever/foo/baz.h".
   // This search is not done for <> headers.
   if (CurFileEnt && !isAngled && !NoCurDirSearch) {
-    llvm::SmallString<1024> TmpDir;
+    SmallString<1024> TmpDir;
     // Concatenate the requested file onto the directory.
     // FIXME: Portability.  Filename concatenation should be in sys::Path.
     TmpDir += CurFileEnt->getDir()->getName();

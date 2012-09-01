@@ -128,11 +128,11 @@ CoffSection::Write(Bytes& bytes, const Section& sect) const
     }
 
     // section name
-    llvm::StringRef fullname = sect.getName();
+    StringRef fullname = sect.getName();
     char name[8] = {0, 0, 0, 0, 0, 0, 0, 0};
     if (fullname.size() > 8)
     {
-        llvm::SmallString<20> namenum;
+        SmallString<20> namenum;
         llvm::raw_svector_ostream os(namenum);
         os << '/' << m_strtab_name;
         std::strncpy(name, os.str().data(), 8);

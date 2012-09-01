@@ -42,8 +42,6 @@
 #include "ElfTypes.h"
 
 
-namespace llvm { class MemoryBuffer; }
-
 namespace yasm
 {
 
@@ -63,7 +61,7 @@ public:
 
     // Constructor that reads from memory buffer (e.g. from file)
     ElfSymbol(const ElfConfig&          config,
-              const llvm::MemoryBuffer& in,
+              const MemoryBuffer& in,
               const ElfSection&         symtab_sect,
               ElfSymbolIndex            index,
               Section*                  sections[],

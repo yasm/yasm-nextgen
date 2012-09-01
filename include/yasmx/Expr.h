@@ -34,6 +34,7 @@
 
 #include "llvm/ADT/APFloat.h"
 #include "llvm/ADT/SmallVector.h"
+#include "yasmx/Basic/LLVM.h"
 #include "yasmx/Basic/SourceLocation.h"
 #include "yasmx/Config/export.h"
 #include "yasmx/DebugDumper.h"
@@ -43,7 +44,7 @@
 #include "yasmx/SymbolRef.h"
 
 
-namespace llvm { class APFloat; class raw_ostream; struct fltSemantics; }
+namespace llvm { class APFloat; struct fltSemantics; }
 
 namespace yasm
 {
@@ -270,7 +271,7 @@ public:
     /// Print to stream.
     /// @param os           output stream
     /// @param base         numeric base (10=decimal, etc)
-    void Print(llvm::raw_ostream& os, int base=10) const;
+    void Print(raw_ostream& os, int base=10) const;
 
 private:
     /// Expression item data.  Correct value depends on type.
@@ -296,7 +297,7 @@ public:
     int m_depth;                ///< Depth in tree.
 };
 
-typedef llvm::SmallVector<ExprTerm, 3> ExprTerms;
+typedef SmallVector<ExprTerm, 3> ExprTerms;
 
 inline ExprTerm&
 ExprTerm::operator= (const ExprTerm& rhs)
@@ -609,7 +610,7 @@ public:
     /// Print to stream.
     /// @param os           output stream
     /// @param base         numeric base (10=decimal, etc)
-    void Print(llvm::raw_ostream& os, int base=10) const;
+    void Print(raw_ostream& os, int base=10) const;
 
     /// Clean up terms by removing all empty (ExprTerm::NONE) elements.
     void Cleanup();
@@ -907,15 +908,15 @@ template <typename T> inline Expr& operator>>=(Expr& lhs, const T& rhs)
 template <typename T> inline Expr& operator<<=(Expr& lhs, const T& rhs)
 { lhs.Calc(Op::SHL, rhs); return lhs; }
 
-inline llvm::raw_ostream&
-operator<< (llvm::raw_ostream& os, const ExprTerm& term)
+inline raw_ostream&
+operator<< (raw_ostream& os, const ExprTerm& term)
 {
     term.Print(os);
     return os;
 }
 
-inline llvm::raw_ostream&
-operator<< (llvm::raw_ostream& os, const Expr& e)
+inline raw_ostream&
+operator<< (raw_ostream& os, const Expr& e)
 {
     e.Print(os);
     return os;

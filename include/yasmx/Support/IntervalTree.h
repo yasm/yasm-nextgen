@@ -20,6 +20,7 @@
 #include <vector>
 
 #include "llvm/Support/raw_ostream.h"
+#include "yasmx/Basic/LLVM.h"
 #include "yasmx/Config/functional.h"
 
 
@@ -42,7 +43,7 @@ public:
     const T& getData() const { return data; }
 
 protected:
-    void Put(llvm::raw_ostream& os, IntervalTreeNode<T>* nil,
+    void Put(raw_ostream& os, IntervalTreeNode<T>* nil,
              IntervalTreeNode<T>* root) const;
 
     IntervalTreeNode<T>* left;
@@ -59,8 +60,7 @@ template <typename T>
 class IntervalTree
 {
     template <typename U> friend
-    llvm::raw_ostream& operator<< (llvm::raw_ostream& os,
-                                   const IntervalTree<U>& it);
+    raw_ostream& operator<< (raw_ostream& os, const IntervalTree<U>& it);
 
 public:
     IntervalTree();
@@ -71,7 +71,7 @@ public:
     IntervalTreeNode<T>* getSuccessor(IntervalTreeNode<T>*) const;
     void Enumerate(long low, long high,
                    TR1::function<void (IntervalTreeNode<T>*)> callback);
-    void Put(llvm::raw_ostream& os) const;
+    void Put(raw_ostream& os) const;
 #ifdef YASM_INTERVAL_TREE_CHECK_ASSUMPTIONS
     void CheckAssumptions() const;
 #endif
@@ -105,7 +105,7 @@ protected:
     void LeftRotate(IntervalTreeNode<T>*);
     void RightRotate(IntervalTreeNode<T>*);
     void TreeInsertHelp(IntervalTreeNode<T>*);
-    void Put(llvm::raw_ostream& os, IntervalTreeNode<T>*) const;
+    void Put(raw_ostream& os, IntervalTreeNode<T>*) const;
     void FixUpMaxHigh(IntervalTreeNode<T>*);
     void DeleteFixUp(IntervalTreeNode<T>*);
 
@@ -123,8 +123,8 @@ protected:
 };
 
 template <typename U>
-inline llvm::raw_ostream&
-operator<< (llvm::raw_ostream& os, const IntervalTree<U>& it)
+inline raw_ostream&
+operator<< (raw_ostream& os, const IntervalTree<U>& it)
 {
     it.Put(os, it.m_root->left);
     return os;
@@ -600,7 +600,7 @@ IntervalTree<T>::getPredecessor(IntervalTreeNode<T>* x) const
 
 template <typename T>
 void
-IntervalTreeNode<T>::Put(llvm::raw_ostream& os,
+IntervalTreeNode<T>::Put(raw_ostream& os,
                          IntervalTreeNode<T>* nil,
                          IntervalTreeNode<T>* root) const
 {
@@ -625,7 +625,7 @@ IntervalTreeNode<T>::Put(llvm::raw_ostream& os,
 
 template <typename T>
 void
-IntervalTree<T>::Put(llvm::raw_ostream& os, IntervalTreeNode<T>* x) const
+IntervalTree<T>::Put(raw_ostream& os, IntervalTreeNode<T>* x) const
 {
     if (x != m_nil)
     {
@@ -637,7 +637,7 @@ IntervalTree<T>::Put(llvm::raw_ostream& os, IntervalTreeNode<T>* x) const
 
 template <typename T>
 void
-IntervalTree<T>::Put(llvm::raw_ostream& os) const
+IntervalTree<T>::Put(raw_ostream& os) const
 {
     Put(os, m_root->left);
 }

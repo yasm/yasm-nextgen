@@ -79,7 +79,7 @@ ModuleFactory::Instance()
 // See example implementations in base.cc and derived.cc
 void
 ModuleFactory::AddCreateFn(unsigned int type,
-                           llvm::StringRef keyword,
+                           StringRef keyword,
                            BASE_CREATE_FN func)
 {
     m_impl->registry.grow(type);
@@ -91,7 +91,7 @@ ModuleFactory::AddCreateFn(unsigned int type,
 // The create function simple looks up the class ID, and if it's in the list,
 // the statement "(*i).second();" calls the function.
 ModuleFactory::BASE_CREATE_FN
-ModuleFactory::getCreateFn(unsigned int type, llvm::StringRef keyword) const
+ModuleFactory::getCreateFn(unsigned int type, StringRef keyword) const
 {
     if (type >= m_impl->registry.size())
         return 0;
@@ -129,7 +129,7 @@ ModuleFactory::getRegistered(unsigned int type) const
 }
 
 bool
-ModuleFactory::isRegistered(unsigned int type, llvm::StringRef keyword) const
+ModuleFactory::isRegistered(unsigned int type, StringRef keyword) const
 {
     if (type >= m_impl->registry.size())
         return false;

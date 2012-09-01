@@ -209,7 +209,7 @@ UnwindInfo::Output(Bytecode& bc, BytecodeOutput& bc_out)
     return true;
 }
 
-llvm::StringRef
+StringRef
 UnwindInfo::getType() const
 {
     return "yasm::objfmt::UnwindInfo";

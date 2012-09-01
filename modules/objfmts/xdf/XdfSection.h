@@ -32,8 +32,6 @@
 #include "yasmx/SymbolRef.h"
 
 
-namespace llvm { class MemoryBuffer; }
-
 namespace yasm
 {
 
@@ -54,7 +52,7 @@ struct YASM_STD_EXPORT XdfSection : public AssocData
 #endif // WITH_XML
 
     void Write(Bytes& bytes, const Section& sect) const;
-    void Read(const llvm::MemoryBuffer& in,
+    void Read(const MemoryBuffer& in,
               unsigned long headpos,
               /*@out@*/ unsigned long* name_sym_index,
               /*@out@*/ IntNum* lma,

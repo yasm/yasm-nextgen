@@ -37,7 +37,7 @@ Parser::~Parser()
 }
 
 void
-Parser::AddDirectives(Directives& dirs, llvm::StringRef parser)
+Parser::AddDirectives(Directives& dirs, StringRef parser)
 {
 }
 
@@ -45,7 +45,7 @@ ParserModule::~ParserModule()
 {
 }
 
-llvm::StringRef
+StringRef
 ParserModule::getType() const
 {
     return "Parser";

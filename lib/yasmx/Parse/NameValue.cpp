@@ -33,7 +33,7 @@
 
 using namespace yasm;
 
-NameValue::NameValue(llvm::StringRef name, llvm::StringRef id, char id_prefix)
+NameValue::NameValue(StringRef name, StringRef id, char id_prefix)
     : m_name(name),
       m_type(ID),
       m_idstr(id),
@@ -42,7 +42,7 @@ NameValue::NameValue(llvm::StringRef name, llvm::StringRef id, char id_prefix)
 {
 }
 
-NameValue::NameValue(llvm::StringRef name, llvm::StringRef str)
+NameValue::NameValue(StringRef name, StringRef str)
     : m_name(name),
       m_type(STRING),
       m_idstr(str),
@@ -51,7 +51,7 @@ NameValue::NameValue(llvm::StringRef name, llvm::StringRef str)
 {
 }
 
-NameValue::NameValue(llvm::StringRef name, std::auto_ptr<Expr> e)
+NameValue::NameValue(StringRef name, std::auto_ptr<Expr> e)
     : m_name(name),
       m_type(EXPR),
       m_expr(e.release()),
@@ -59,7 +59,7 @@ NameValue::NameValue(llvm::StringRef name, std::auto_ptr<Expr> e)
 {
 }
 
-NameValue::NameValue(llvm::StringRef id, char id_prefix)
+NameValue::NameValue(StringRef id, char id_prefix)
     : m_type(ID),
       m_idstr(id),
       m_expr(0),
@@ -67,7 +67,7 @@ NameValue::NameValue(llvm::StringRef id, char id_prefix)
 {
 }
 
-NameValue::NameValue(llvm::StringRef str)
+NameValue::NameValue(StringRef str)
     : m_type(STRING),
       m_idstr(str),
       m_expr(0),
@@ -163,7 +163,7 @@ NameValue::getRegister() const
     return m_expr->getRegister();
 }
 
-llvm::StringRef
+StringRef
 NameValue::getString() const
 {
     switch (m_type)
@@ -177,12 +177,12 @@ NameValue::getString() const
     }
 }
 
-llvm::StringRef
+StringRef
 NameValue::getId() const
 {
     assert (m_type == ID && "name/value not convertible to identifier");
     if (m_idstr[0] == m_id_prefix)
-        return llvm::StringRef(m_idstr).substr(1);
+        return StringRef(m_idstr).substr(1);
     else
         return m_idstr;
 }
@@ -207,7 +207,7 @@ NameValue::Write(pugi::xml_node out) const
         case ID:
             type = "id";
             append_child(val, "Id", m_idstr);
-            append_child(val, "Prefix", llvm::StringRef(&m_id_prefix, 1));
+            append_child(val, "Prefix", StringRef(&m_id_prefix, 1));
             break;
         case STRING:
             type = "string";

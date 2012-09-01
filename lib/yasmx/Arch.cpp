@@ -49,7 +49,7 @@ Arch::~Arch()
 }
 
 void
-Arch::AddDirectives(Directives& dirs, llvm::StringRef parser)
+Arch::AddDirectives(Directives& dirs, StringRef parser)
 {
 }
 
@@ -70,7 +70,7 @@ ArchModule::~ArchModule()
 {
 }
 
-llvm::StringRef
+StringRef
 ArchModule::getType() const
 {
     return "Arch";

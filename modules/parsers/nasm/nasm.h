@@ -10,7 +10,6 @@
 #ifndef YASM_NASM_H
 #define YASM_NASM_H
 
-namespace llvm { class MemoryBuffer; }
 namespace yasm { class IntNum; class Expr; }
 
 namespace nasm {

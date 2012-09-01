@@ -50,7 +50,7 @@ using namespace yasm::parser;
 /// float: "0" [a-zA-Z except bB or xX]
 ///        [-+]? [0-9]* ([.] [0-9]*)? ([eE] [-+]? [0-9]+)?
 ///
-GasNumericParser::GasNumericParser(llvm::StringRef str,
+GasNumericParser::GasNumericParser(StringRef str,
                                    SourceLocation loc,
                                    Preprocessor& pp,
                                    bool force_float)

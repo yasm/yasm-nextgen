@@ -33,6 +33,7 @@
 /// POSSIBILITY OF SUCH DAMAGE.
 /// @endlicense
 ///
+#include "yasmx/Basic/LLVM.h"
 #include "yasmx/Config/export.h"
 #include "yasmx/Parse/Parser.h"
 #include "yasmx/Parse/Preprocessor.h"
@@ -222,13 +223,13 @@ public:
     /// Merge tokens as a string until we get to one of the specified tokens,
     /// we reach end of statement (if stop_at_eos is true) or we hit a token
     /// with leading whitespace (if stop_at_ws is true).
-    llvm::StringRef MergeTokensUntil(const unsigned int* toks,
-                                     unsigned int num_toks,
-                                     SourceLocation* start,
-                                     SourceLocation* end,
-                                     llvm::SmallVectorImpl<char>& buffer,
-                                     bool stop_at_eos = true,
-                                     bool stop_at_ws = true);
+    StringRef MergeTokensUntil(const unsigned int* toks,
+                               unsigned int num_toks,
+                               SourceLocation* start,
+                               SourceLocation* end,
+                               SmallVectorImpl<char>& buffer,
+                               bool stop_at_eos = true,
+                               bool stop_at_ws = true);
 
     /// Expression parser.
     virtual bool ParseExpr(Expr& e, const ParseExprTerm* parse_term = 0) = 0;

@@ -47,7 +47,7 @@ ElfReloc::ElfReloc(SymbolRef sym, const IntNum& addr)
 
 ElfReloc::ElfReloc(const ElfConfig& config,
                    const ElfSymtab& symtab,
-                   const llvm::MemoryBuffer& in,
+                   const MemoryBuffer& in,
                    unsigned long* pos,
                    bool rela)
     : Reloc(0, SymbolRef(0))

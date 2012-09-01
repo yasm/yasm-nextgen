@@ -37,7 +37,7 @@ DebugFormat::~DebugFormat()
 }
 
 void
-DebugFormat::AddDirectives(Directives& dirs, llvm::StringRef parser)
+DebugFormat::AddDirectives(Directives& dirs, StringRef parser)
 {
 }
 
@@ -45,7 +45,7 @@ DebugFormatModule::~DebugFormatModule()
 {
 }
 
-llvm::StringRef
+StringRef
 DebugFormatModule::getType() const
 {
     return "DebugFormat";

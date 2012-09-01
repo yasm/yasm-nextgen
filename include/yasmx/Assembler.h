@@ -30,11 +30,10 @@
 /// @endlicense
 ///
 #include "llvm/ADT/StringRef.h"
+#include "yasmx/Basic/LLVM.h"
 #include "yasmx/Config/export.h"
 #include "yasmx/Support/scoped_ptr.h"
 
-
-namespace llvm { class MemoryBuffer; class raw_fd_ostream; }
 
 /// Namespace for classes, functions, and templates related to the Yasm
 /// assembler.
@@ -77,8 +76,8 @@ public:
     /// @param objfmt_keyword   object format keyword
     /// @param diags            diagnostic reporting
     /// @param dump_time        when (if ever) to dump object XML to stderr
-    Assembler(llvm::StringRef arch_keyword,
-              llvm::StringRef objfmt_keyword,
+    Assembler(StringRef arch_keyword,
+              StringRef objfmt_keyword,
               DiagnosticsEngine& diags,
               ObjectDumpTime dump_time = DUMP_NEVER);
 
@@ -88,41 +87,39 @@ public:
     /// Set the object filename; if not set prior to assembly, determined
     /// from source filename according to the object format settings.
     /// @param obj_filename     object filename (e.g. "file.o")
-    void setObjectFilename(llvm::StringRef obj_filename);
+    void setObjectFilename(StringRef obj_filename);
 
     /// Set the machine of architecture; if not set prior to assembly,
     /// determined by object format.
     /// @param machine          machine name
     /// @param diags            diagnostic reporting
     /// @return False on error.
-    bool setMachine(llvm::StringRef machine, DiagnosticsEngine& diags);
+    bool setMachine(StringRef machine, DiagnosticsEngine& diags);
 
     /// Set the parser.
     /// @param parser_keyword   parser keyword
     /// @param diags            diagnostic reporting
     /// @return False on error.
-    bool setParser(llvm::StringRef parser_keyword, DiagnosticsEngine& diags);
+    bool setParser(StringRef parser_keyword, DiagnosticsEngine& diags);
 
     /// Check to see if a particular debug format is legal for the selected
     /// object format.
     /// @return False if not legal.
-    bool isOkDebugFormat(llvm::StringRef dbgfmt_keyword) const;
+    bool isOkDebugFormat(StringRef dbgfmt_keyword) const;
 
     /// Set the debug format; if not set prior to assembly, defaults to null
     /// debug format (e.g. no debugging information).
     /// @param dbgfmt_keyword   debug format keyword
     /// @param diags            diagnostic reporting
     /// @return False on error.
-    bool setDebugFormat(llvm::StringRef dbgfmt_keyword,
-                        DiagnosticsEngine& diags);
+    bool setDebugFormat(StringRef dbgfmt_keyword, DiagnosticsEngine& diags);
 
     /// Set the list format; if not set prior to assembly, defaults to null
     /// list format (e.g. no list output).
     /// @param listfmt_keyword  list format keyword
     /// @param diags            diagnostic reporting
     /// @return False on error.
-    bool setListFormat(llvm::StringRef list_keyword,
-                       DiagnosticsEngine& diags);
+    bool setListFormat(StringRef list_keyword, DiagnosticsEngine& diags);
 
     /// Initialize the object for assembly.  Does not read from input file.
     /// @param source_mgr       source manager
@@ -151,7 +148,7 @@ public:
     /// performed first.
     /// @param os               output stream
     /// @return True on success, false on failure.
-    bool Output(llvm::raw_fd_ostream& os, DiagnosticsEngine& diags);
+    bool Output(raw_fd_ostream& os, DiagnosticsEngine& diags);
 
     /// Get the object.  Returns 0 until after InitObject() is called.
     /// @return Object.
@@ -163,7 +160,7 @@ public:
 
     /// Get the object filename.  May return empty string if called prior
     /// to assemble() being called.
-    llvm::StringRef getObjectFilename() const { return m_obj_filename; }
+    StringRef getObjectFilename() const { return m_obj_filename; }
 
 private:
     Assembler(const Assembler&);                    // not implemented

@@ -42,6 +42,7 @@
 
 using namespace yasm;
 using namespace yasm::objfmt;
+using llvm::format;
 
 static void
 MapPrescanBytes(const Section& sect, const BinSection& bsd, int* bytes)
@@ -54,7 +55,7 @@ MapPrescanBytes(const Section& sect, const BinSection& bsd, int* bytes)
         *bytes *= 2;
 }
 
-BinMapOutput::BinMapOutput(llvm::raw_ostream& os,
+BinMapOutput::BinMapOutput(raw_ostream& os,
                            const Object& object,
                            const IntNum& origin,
                            const BinGroups& groups,
@@ -150,12 +151,12 @@ BinMapOutput::OutputSectionsSummary()
         m_os << '-';
 
     m_os << "\n\n";
-    m_os << llvm::format("%-*s", m_bytes*2+2, (const char*)"Vstart");
-    m_os << llvm::format("%-*s", m_bytes*2+2, (const char*)"Vstop");
-    m_os << llvm::format("%-*s", m_bytes*2+2, (const char*)"Start");
-    m_os << llvm::format("%-*s", m_bytes*2+2, (const char*)"Stop");
-    m_os << llvm::format("%-*s", m_bytes*2+2, (const char*)"Length");
-    m_os << llvm::format("%-10s", (const char*)"Class");
+    m_os << format("%-*s", m_bytes*2+2, (const char*)"Vstart");
+    m_os << format("%-*s", m_bytes*2+2, (const char*)"Vstop");
+    m_os << format("%-*s", m_bytes*2+2, (const char*)"Start");
+    m_os << format("%-*s", m_bytes*2+2, (const char*)"Stop");
+    m_os << format("%-*s", m_bytes*2+2, (const char*)"Length");
+    m_os << format("%-10s", (const char*)"Class");
     m_os << "Name\n";
     InnerSectionsSummary(m_groups);
     m_os << '\n';
@@ -168,7 +169,7 @@ BinMapOutput::InnerSectionsDetail(const BinGroups& groups)
          group != end; ++group)
     {
         const Section& sect = group->m_section;
-        llvm::StringRef name = sect.getName();
+        StringRef name = sect.getName();
         m_os << "---- Section " << name << " ";
         for (size_t i=0; i<65-name.size(); ++i)
             m_os << '-';
@@ -268,14 +269,14 @@ BinMapOutput::InnerSectionsSymbols(const BinGroups& groups)
     {
         if (CountSymbols(m_object, &group->m_section) > 0)
         {
-            llvm::StringRef name = group->m_section.getName();
+            StringRef name = group->m_section.getName();
             m_os << "---- Section " << name << ' ';
             for (size_t i=0; i<65-name.size(); ++i)
                 m_os << '-';
 
             m_os << "\n\n";
-            m_os << llvm::format("%-*s", m_bytes*2+2, (const char*)"Real");
-            m_os << llvm::format("%-*s", m_bytes*2+2, (const char*)"Virtual");
+            m_os << format("%-*s", m_bytes*2+2, (const char*)"Real");
+            m_os << format("%-*s", m_bytes*2+2, (const char*)"Virtual");
             m_os << "Name\n";
             OutputSymbols(&group->m_section);
             m_os << "\n\n";
@@ -305,7 +306,7 @@ BinMapOutput::OutputSectionsSymbols()
         for (int i=0; i<63; ++i)
             m_os << '-';
         m_os << "\n\n";
-        m_os << llvm::format("%-*s", m_bytes*2+2, (const char*)"Value");
+        m_os << format("%-*s", m_bytes*2+2, (const char*)"Value");
         m_os << "Name\n";
         OutputSymbols(0);
         m_os << "\n\n";

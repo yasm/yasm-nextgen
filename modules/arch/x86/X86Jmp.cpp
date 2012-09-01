@@ -77,7 +77,7 @@ public:
                 DiagnosticsEngine& diags);
     bool Output(Bytecode& bc, BytecodeOutput& bc_out);
 
-    llvm::StringRef getType() const;
+    StringRef getType() const;
 
     X86Jmp* clone() const;
 
@@ -256,7 +256,7 @@ X86Jmp::Output(Bytecode& bc, BytecodeOutput& bc_out)
     return true;
 }
 
-llvm::StringRef
+StringRef
 X86Jmp::getType() const
 {
     return "yasm::arch::X86Jmp";

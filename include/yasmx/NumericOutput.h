@@ -36,7 +36,6 @@ namespace llvm
 {
 class APFloat;
 class APInt;
-struct fltSemantics;
 }
 
 namespace yasm

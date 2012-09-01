@@ -72,7 +72,7 @@ public:
     /// Convert a bytecode into its byte representation.
     bool Output(Bytecode& bc, BytecodeOutput& bc_out);
 
-    llvm::StringRef getType() const;
+    StringRef getType() const;
 
     SpecialType getSpecial() const;
 
@@ -292,7 +292,7 @@ AlignBytecode::Output(Bytecode& bc, BytecodeOutput& bc_out)
     return true;
 }
 
-llvm::StringRef
+StringRef
 AlignBytecode::getType() const
 {
     return "yasm::AlignBytecode";

@@ -67,7 +67,7 @@ public:
 
     /// Print a register.  For debugging purposes.
     /// @param os   output stream
-    void Put(llvm::raw_ostream& os) const;
+    void Put(raw_ostream& os) const;
 
 #ifdef WITH_XML
     /// Write an XML representation.  For debugging purposes.
@@ -111,7 +111,7 @@ public:
 
     /// Print a segment register.  For debugging purposes.
     /// @param os   output stream
-    void Put(llvm::raw_ostream& os) const;
+    void Put(raw_ostream& os) const;
 
 #ifdef WITH_XML
     /// Write an XML representation.  For debugging purposes.

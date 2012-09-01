@@ -50,27 +50,27 @@ public:
     /// Destructor.
     ~XdfObject();
 
-    void AddDirectives(Directives& dirs, llvm::StringRef parser);
+    void AddDirectives(Directives& dirs, StringRef parser);
 
     bool Read(SourceManager& sm, DiagnosticsEngine& diags);
-    void Output(llvm::raw_fd_ostream& os,
+    void Output(raw_fd_ostream& os,
                 bool all_syms,
                 DebugFormat& dbgfmt,
                 DiagnosticsEngine& diags);
 
     Section* AddDefaultSection();
-    Section* AppendSection(llvm::StringRef name,
+    Section* AppendSection(StringRef name,
                            SourceLocation source,
                            DiagnosticsEngine& diags);
 
-    static llvm::StringRef getName() { return "Extended Dynamic Object"; }
-    static llvm::StringRef getKeyword() { return "xdf"; }
-    static llvm::StringRef getExtension() { return ".xdf"; }
+    static StringRef getName() { return "Extended Dynamic Object"; }
+    static StringRef getKeyword() { return "xdf"; }
+    static StringRef getExtension() { return ".xdf"; }
     static unsigned int getDefaultX86ModeBits() { return 32; }
-    static llvm::StringRef getDefaultDebugFormatKeyword() { return "null"; }
-    static std::vector<llvm::StringRef> getDebugFormatKeywords();
+    static StringRef getDefaultDebugFormatKeyword() { return "null"; }
+    static std::vector<StringRef> getDebugFormatKeywords();
     static bool isOkObject(Object& object);
-    static bool Taste(const llvm::MemoryBuffer& in,
+    static bool Taste(const MemoryBuffer& in,
                       /*@out@*/ std::string* arch_keyword,
                       /*@out@*/ std::string* machine);
 

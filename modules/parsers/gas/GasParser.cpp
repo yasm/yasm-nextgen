@@ -215,7 +215,7 @@ GasParser::Parse(Object& object, Directives& dirs, DiagnosticsEngine& diags)
 }
 
 void
-GasParser::AddDirectives(Directives& dirs, llvm::StringRef parser)
+GasParser::AddDirectives(Directives& dirs, StringRef parser)
 {
     if (parser.equals_lower("gas") || parser.equals_lower("gnu"))
     {

@@ -32,6 +32,7 @@
 #include <vector>
 
 #include "llvm/ADT/StringRef.h"
+#include "yasmx/Basic/LLVM.h"
 #include "yasmx/Config/export.h"
 #include "yasmx/Support/scoped_ptr.h"
 
@@ -47,7 +48,7 @@ class ObjectFormat;
 class Parser;
 class Preprocessor;
 
-typedef std::vector<llvm::StringRef> ModuleNames;
+typedef std::vector<StringRef> ModuleNames;
 
 namespace impl
 {
@@ -70,20 +71,17 @@ public:
     /// Derived classes call this function once
     /// per program to register the class ID key, and a pointer to
     /// the function that creates the class.
-    void AddCreateFn(unsigned int type,
-                     llvm::StringRef keyword,
-                     BASE_CREATE_FN func);
+    void AddCreateFn(unsigned int type, StringRef keyword, BASE_CREATE_FN func);
 
     /// Get the creation function for a given type and class name.
     /// @return NULL if not found.
-    BASE_CREATE_FN getCreateFn(unsigned int type,
-                               llvm::StringRef keyword) const;
+    BASE_CREATE_FN getCreateFn(unsigned int type, StringRef keyword) const;
 
     /// Return a list of classes that are registered.
     ModuleNames getRegistered(unsigned int type) const;
 
     /// Return true if the specific class is registered.
-    bool isRegistered(unsigned int type, llvm::StringRef keyword) const;
+    bool isRegistered(unsigned int type, StringRef keyword) const;
 
 private:
     /// Singleton implementation - private ctor.
@@ -107,7 +105,7 @@ void* CreateInstance()
 
 template <typename Ancestor, typename Manufactured>
 inline void
-RegisterModule(llvm::StringRef keyword)
+RegisterModule(StringRef keyword)
 {
     impl::ModuleFactory::Instance().AddCreateFn(
         Ancestor::module_type,
@@ -117,7 +115,7 @@ RegisterModule(llvm::StringRef keyword)
 
 template <typename T>
 inline std::auto_ptr<T>
-LoadModule(llvm::StringRef keyword)
+LoadModule(StringRef keyword)
 {
     impl::ModuleFactory::BASE_CREATE_FN create =
         impl::ModuleFactory::Instance().getCreateFn(T::module_type, keyword);
@@ -128,7 +126,7 @@ LoadModule(llvm::StringRef keyword)
 
 template <typename T>
 inline bool
-isModule(llvm::StringRef keyword)
+isModule(StringRef keyword)
 {
     return impl::ModuleFactory::Instance().isRegistered(T::module_type,
                                                         keyword);

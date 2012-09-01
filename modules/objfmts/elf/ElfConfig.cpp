@@ -85,7 +85,7 @@ ElfConfig::AssignSymbolIndices(Object& object, ElfSymbolIndex* nlocal) const
 }
 
 unsigned long
-ElfConfig::WriteSymbolTable(llvm::raw_ostream& os,
+ElfConfig::WriteSymbolTable(raw_ostream& os,
                             Object& object,
                             DiagnosticsEngine& diags,
                             Bytes& scratch) const
@@ -116,13 +116,13 @@ ElfConfig::WriteSymbolTable(llvm::raw_ostream& os,
 }
 
 bool
-ElfConfig::ReadSymbolTable(const llvm::MemoryBuffer&    in,
-                           const ElfSection&            symtab_sect,
-                           ElfSymtab&                   symtab,
-                           Object&                      object,
-                           const StringTable&           strtab,
-                           Section*                     sections[],
-                           DiagnosticsEngine&           diags) const
+ElfConfig::ReadSymbolTable(const MemoryBuffer&  in,
+                           const ElfSection&    symtab_sect,
+                           ElfSymtab&           symtab,
+                           Object&              object,
+                           const StringTable&   strtab,
+                           Section*             sections[],
+                           DiagnosticsEngine&   diags) const
 {
     ElfSize symsize = symtab_sect.getEntSize();
     if (symsize == 0)
@@ -165,7 +165,7 @@ ElfConfig::getProgramHeaderSize() const
 }
 
 bool
-ElfConfig::ReadProgramHeader(const llvm::MemoryBuffer& in)
+ElfConfig::ReadProgramHeader(const MemoryBuffer& in)
 {
     InputBuffer inbuf(in);
 
@@ -235,7 +235,7 @@ ElfConfig::ReadProgramHeader(const llvm::MemoryBuffer& in)
 }
 
 void
-ElfConfig::WriteProgramHeader(llvm::raw_ostream& os, Bytes& scratch)
+ElfConfig::WriteProgramHeader(raw_ostream& os, Bytes& scratch)
 {
     scratch.resize(0);
     setEndian(scratch);

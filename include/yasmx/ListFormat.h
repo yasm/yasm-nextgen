@@ -32,12 +32,11 @@
 #include <memory>
 
 #include "llvm/ADT/StringRef.h"
+#include "yasmx/Basic/LLVM.h"
 #include "yasmx/Config/export.h"
 
 #include "yasmx/Module.h"
 
-
-namespace llvm { class raw_ostream; }
 
 namespace yasm
 {
@@ -61,14 +60,14 @@ public:
     const ListFormatModule& getModule() const { return m_module; }
 
     /// Add directive handlers.
-    virtual void AddDirectives(Directives& dirs, llvm::StringRef parser);
+    virtual void AddDirectives(Directives& dirs, StringRef parser);
 
     /// Write out list to the list file.
     /// This function may call all read-only yasm:: functions as necessary.
     /// @param os           output stream
     /// @param linemap      line mapping repository
     /// @param arch         architecture
-    virtual void Output(llvm::raw_ostream& os,
+    virtual void Output(raw_ostream& os,
                         Linemap& linemap,
                         Arch& arch) = 0;
 
@@ -90,7 +89,7 @@ public:
 
     /// Get the module type.
     /// @return "ListFormat".
-    llvm::StringRef getType() const;
+    StringRef getType() const;
 
     /// ListFormat factory function.
     /// @return New list format.
@@ -104,8 +103,8 @@ public:
     ListFormatModuleImpl() {}
     ~ListFormatModuleImpl() {}
 
-    llvm::StringRef getName() const { return ListFormatImpl::getName(); }
-    llvm::StringRef getKeyword() const { return ListFormatImpl::getKeyword(); }
+    StringRef getName() const { return ListFormatImpl::getName(); }
+    StringRef getKeyword() const { return ListFormatImpl::getKeyword(); }
 
     std::auto_ptr<ListFormat> Create() const
     {

@@ -50,9 +50,7 @@ public:
     /// preprocessor managing the lexing process.  This lexer assumes that
     /// the associated file buffer and Preprocessor objects will outlive it,
     /// so it doesn't take ownership of either of them.
-    Lexer(FileID fid,
-          const llvm::MemoryBuffer* input_buffer,
-          Preprocessor& pp);
+    Lexer(FileID fid, const MemoryBuffer* input_buffer, Preprocessor& pp);
 
     /// Create a new raw lexer object.  This object is only suitable for calls
     /// to 'LexRawToken'.  This lexer assumes that the text range will outlive
@@ -66,7 +64,7 @@ public:
     /// calls to 'LexRawToken'.  This lexer assumes that the text range will
     /// outlive it, so it doesn't take ownership of it.
     Lexer(FileID fid,
-          const llvm::MemoryBuffer* input_buffer,
+          const MemoryBuffer* input_buffer,
           const SourceManager& sm);
 
     virtual ~Lexer();

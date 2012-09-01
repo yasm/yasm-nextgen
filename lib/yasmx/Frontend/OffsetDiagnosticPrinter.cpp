@@ -96,7 +96,7 @@ OffsetDiagnosticPrinter::HandleDiagnostic(DiagnosticsEngine::Level level,
     if (m_use_colors)
         m_os.resetColor();
 
-    llvm::SmallString<100> out_str;
+    SmallString<100> out_str;
     info.FormatDiagnostic(out_str);
 
     if (m_print_diagnostic_option)

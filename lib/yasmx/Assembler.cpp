@@ -46,18 +46,18 @@ using namespace yasm;
 namespace {
 class NocaseEquals
 {
-    llvm::StringRef s;
+    StringRef s;
 public:
-    NocaseEquals(llvm::StringRef str) : s(str) {}
-    bool operator() (llvm::StringRef oth)
+    NocaseEquals(StringRef str) : s(str) {}
+    bool operator() (StringRef oth)
     {
         return s.equals_lower(oth);
     }
 };
 } // anonymous namespace
 
-Assembler::Assembler(llvm::StringRef arch_keyword,
-                     llvm::StringRef objfmt_keyword,
+Assembler::Assembler(StringRef arch_keyword,
+                     StringRef objfmt_keyword,
                      DiagnosticsEngine& diags,
                      Assembler::ObjectDumpTime dump_time)
     : m_arch_module(LoadModule<ArchModule>(arch_keyword).release()),
@@ -102,13 +102,13 @@ Assembler::~Assembler()
 }
 
 void
-Assembler::setObjectFilename(llvm::StringRef obj_filename)
+Assembler::setObjectFilename(StringRef obj_filename)
 {
     m_obj_filename = obj_filename;
 }
 
 bool
-Assembler::setMachine(llvm::StringRef machine, DiagnosticsEngine& diags)
+Assembler::setMachine(StringRef machine, DiagnosticsEngine& diags)
 {
     if (!m_arch->setMachine(machine))
     {
@@ -123,7 +123,7 @@ Assembler::setMachine(llvm::StringRef machine, DiagnosticsEngine& diags)
 }
 
 bool
-Assembler::setParser(llvm::StringRef parser_keyword, DiagnosticsEngine& diags)
+Assembler::setParser(StringRef parser_keyword, DiagnosticsEngine& diags)
 {
     // Ensure architecture supports parser.
     if (!m_arch->setParser(parser_keyword))
@@ -147,9 +147,9 @@ Assembler::setParser(llvm::StringRef parser_keyword, DiagnosticsEngine& diags)
 }
 
 bool
-Assembler::isOkDebugFormat(llvm::StringRef dbgfmt_keyword) const
+Assembler::isOkDebugFormat(StringRef dbgfmt_keyword) const
 {
-    std::vector<llvm::StringRef> dbgfmt_keywords =
+    std::vector<StringRef> dbgfmt_keywords =
         m_objfmt_module->getDebugFormatKeywords();
     return (std::find_if(dbgfmt_keywords.begin(), dbgfmt_keywords.end(),
                      NocaseEquals(dbgfmt_keyword))
@@ -157,8 +157,7 @@ Assembler::isOkDebugFormat(llvm::StringRef dbgfmt_keyword) const
 }
 
 bool
-Assembler::setDebugFormat(llvm::StringRef dbgfmt_keyword,
-                          DiagnosticsEngine& diags)
+Assembler::setDebugFormat(StringRef dbgfmt_keyword, DiagnosticsEngine& diags)
 {
     // Check to see if the requested debug format is in the allowed list
     // for the active object format.
@@ -183,8 +182,7 @@ Assembler::setDebugFormat(llvm::StringRef dbgfmt_keyword,
 }
 
 bool
-Assembler::setListFormat(llvm::StringRef listfmt_keyword,
-                         DiagnosticsEngine& diags)
+Assembler::setListFormat(StringRef listfmt_keyword, DiagnosticsEngine& diags)
 {
     std::auto_ptr<ListFormatModule> listfmt_module =
         LoadModule<ListFormatModule>(listfmt_keyword);
@@ -201,9 +199,9 @@ Assembler::setListFormat(llvm::StringRef listfmt_keyword,
 bool
 Assembler::InitObject(SourceManager& source_mgr, DiagnosticsEngine& diags)
 {
-    llvm::StringRef in_filename =
+    StringRef in_filename =
         source_mgr.getBuffer(source_mgr.getMainFileID())->getBufferIdentifier();
-    llvm::StringRef parser_keyword = m_parser_module->getKeyword();
+    StringRef parser_keyword = m_parser_module->getKeyword();
 
     // determine the object filename if not specified
     if (m_obj_filename.empty())
@@ -296,7 +294,7 @@ Assembler::InitParser(SourceManager& source_mgr,
 bool
 Assembler::Assemble(SourceManager& source_mgr, DiagnosticsEngine& diags)
 {
-    llvm::StringRef parser_keyword = m_parser_module->getKeyword();
+    StringRef parser_keyword = m_parser_module->getKeyword();
 
     // Set up directive handlers
     Directives dirs;
@@ -347,7 +345,7 @@ Assembler::Assemble(SourceManager& source_mgr, DiagnosticsEngine& diags)
 }
 
 bool
-Assembler::Output(llvm::raw_fd_ostream& os, DiagnosticsEngine& diags)
+Assembler::Output(raw_fd_ostream& os, DiagnosticsEngine& diags)
 {
     // Inform the diagnostic consumer we are processing a source file
     diags.getClient()->BeginSourceFile();

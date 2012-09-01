@@ -106,7 +106,7 @@ public:
                         /*@out@*/ long* pos_thres,
                         DiagnosticsEngine& diags);
     virtual bool Output(Bytecode& bc, BytecodeOutput& bc_out);
-    llvm::StringRef getType() const;
+    StringRef getType() const;
     virtual UnwindCode* clone() const;
 #ifdef WITH_XML
     virtual pugi::xml_node Write(pugi::xml_node out) const;

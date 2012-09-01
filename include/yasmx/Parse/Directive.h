@@ -29,7 +29,7 @@
 /// POSSIBILITY OF SUCH DAMAGE.
 /// @endlicense
 ///
-#include "llvm/ADT/StringRef.h"
+#include "yasmx/Basic/LLVM.h"
 #include "yasmx/Basic/SourceLocation.h"
 #include "yasmx/Config/export.h"
 #include "yasmx/Config/functional.h"
@@ -108,7 +108,7 @@ public:
     ///                     name (not including the []).
     /// @param handler      Directive function
     /// @param flags        Flags for pre-handler parameter checking.
-    void Add(llvm::StringRef name, Directive handler, Flags flags = ANY);
+    void Add(StringRef name, Directive handler, Flags flags = ANY);
 
     /// Add directives from an initializer array.
     /// @param me           this pointer to associate
@@ -128,7 +128,7 @@ public:
     /// @param name         directive name
     /// @return True if directive exists, and handler is set to the
     ///         matching handler.
-    bool get(Directive* handler, llvm::StringRef name) const;
+    bool get(Directive* handler, StringRef name) const;
 
 private:
     /// Pimpl for class internals.

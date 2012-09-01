@@ -38,8 +38,6 @@
 #include "ElfTypes.h"
 
 
-namespace llvm { class MemoryBuffer; }
-
 namespace yasm
 {
 
@@ -57,10 +55,10 @@ public:
     static const char* key;
 
     // Constructor that reads from memory buffer.
-    ElfSection(const ElfConfig&             config,
-               const llvm::MemoryBuffer&    in,
-               ElfSectionIndex              index,
-               DiagnosticsEngine&           diags);
+    ElfSection(const ElfConfig&     config,
+               const MemoryBuffer&  in,
+               ElfSectionIndex      index,
+               DiagnosticsEngine&   diags);
 
     ElfSection(const ElfConfig&     config,
                ElfSectionType       type,
@@ -73,11 +71,11 @@ public:
     pugi::xml_node Write(pugi::xml_node out) const;
 #endif // WITH_XML
 
-    unsigned long Write(llvm::raw_ostream& os, Bytes& scratch) const;
+    unsigned long Write(raw_ostream& os, Bytes& scratch) const;
 
     std::auto_ptr<Section> CreateSection(const StringTable& shstrtab) const;
     bool LoadSectionData(Section& sect,
-                         const llvm::MemoryBuffer& in,
+                         const MemoryBuffer& in,
                          DiagnosticsEngine& diags) const;
 
     ElfSectionType getType() const { return m_type; }
@@ -117,16 +115,16 @@ public:
     void setSize(const IntNum& size) { m_size = size; }
     IntNum getSize() const { return m_size; }
 
-    unsigned long WriteRel(llvm::raw_ostream& os,
+    unsigned long WriteRel(raw_ostream& os,
                            ElfSectionIndex symtab,
                            Section& sect,
                            Bytes& scratch);
-    unsigned long WriteRelocs(llvm::raw_ostream& os,
+    unsigned long WriteRelocs(raw_ostream& os,
                               Section& sect,
                               Bytes& scratch,
                               const ElfMachine& machine,
                               DiagnosticsEngine& diags);
-    void ReadRelocs(const llvm::MemoryBuffer& in,
+    void ReadRelocs(const MemoryBuffer& in,
                     const ElfSection& reloc_sect,
                     Section& sect,
                     const ElfMachine& machine,

@@ -43,34 +43,34 @@ public:
     Win64Object(const ObjectFormatModule& module, Object& object);
     virtual ~Win64Object();
 
-    virtual void AddDirectives(Directives& dirs, llvm::StringRef parser);
+    virtual void AddDirectives(Directives& dirs, StringRef parser);
 
     //virtual void InitSymbols()
     //virtual void Read()
-    virtual void Output(llvm::raw_fd_ostream& os,
+    virtual void Output(raw_fd_ostream& os,
                         bool all_syms,
                         DebugFormat& dbgfmt,
                         DiagnosticsEngine& diags);
 
-    static llvm::StringRef getName() { return "Win64"; }
-    static llvm::StringRef getKeyword() { return "win64"; }
-    static llvm::StringRef getExtension() { return ".obj"; }
+    static StringRef getName() { return "Win64"; }
+    static StringRef getKeyword() { return "win64"; }
+    static StringRef getExtension() { return ".obj"; }
     static unsigned int getDefaultX86ModeBits() { return 64; }
 
-    static llvm::StringRef getDefaultDebugFormatKeyword()
+    static StringRef getDefaultDebugFormatKeyword()
     { return Win32Object::getDefaultDebugFormatKeyword(); }
-    static std::vector<llvm::StringRef> getDebugFormatKeywords()
+    static std::vector<StringRef> getDebugFormatKeywords()
     { return Win32Object::getDebugFormatKeywords(); }
 
     static bool isOkObject(Object& object)
     { return Win32Object::isOkObject(object); }
-    static bool Taste(const llvm::MemoryBuffer& in,
+    static bool Taste(const MemoryBuffer& in,
                       /*@out@*/ std::string* arch_keyword,
                       /*@out@*/ std::string* machine)
     { return false; }
 
 private:
-    virtual bool InitSection(llvm::StringRef name,
+    virtual bool InitSection(StringRef name,
                              Section& section,
                              CoffSection* coffsect,
                              SourceLocation source,

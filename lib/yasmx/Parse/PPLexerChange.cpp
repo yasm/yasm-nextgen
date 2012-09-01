@@ -63,7 +63,7 @@ Preprocessor::EnterSourceFile(FileID FID,
 
     // Get the MemoryBuffer for this FID, if it fails, we fail.
     bool Invalid = false;
-    const llvm::MemoryBuffer *InputFile =
+    const MemoryBuffer *InputFile =
         getSourceManager().getBuffer(FID, Loc, &Invalid);
     if (Invalid) {
         SourceLocation FileStart = m_source_mgr.getLocForStartOfFile(FID);

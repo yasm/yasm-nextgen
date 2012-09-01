@@ -54,7 +54,10 @@ using yasm::DirectoryLookup;
 using yasm::Expr;
 using yasm::FileID;
 using yasm::IntNum;
+using yasm::MemoryBuffer;
 using yasm::SourceLocation;
+using yasm::SmallString;
+using yasm::StringRef;
 
 namespace nasm {
 
@@ -64,8 +67,8 @@ const char *tasm_segment;
 
 yasm::Preprocessor* yasm_preproc;
 
-const llvm::MemoryBuffer*
-yasm_fopen_include(llvm::StringRef filename,
+const MemoryBuffer*
+yasm_fopen_include(StringRef filename,
                    const DirectoryLookup* from_dir,
                    const DirectoryLookup*& cur_dir,
                    FileID from_file,
@@ -88,7 +91,7 @@ yasm_fopen_include(llvm::StringRef filename,
     cur_file = fid;
 
     bool invalid = false;
-    const llvm::MemoryBuffer* input_file =
+    const MemoryBuffer* input_file =
         srcmgr.getBuffer(fid, SourceLocation(), &invalid);
     if (invalid)
         return 0;
@@ -97,7 +100,7 @@ yasm_fopen_include(llvm::StringRef filename,
 }
 
 char *
-yasm_fgets(char *buf, int n, const llvm::MemoryBuffer *in, size_t *pos)
+yasm_fgets(char *buf, int n, const MemoryBuffer *in, size_t *pos)
 {
     if (n <= 0)
         return NULL;
@@ -272,7 +275,7 @@ struct Include
 {
     Include *next;
     FileID fid;
-    const llvm::MemoryBuffer *in;
+    const MemoryBuffer *in;
     const DirectoryLookup* cur_dir;
     size_t pos;
     Cond *conds;
@@ -1862,14 +1865,14 @@ get_ctx(char *name, int all_contexts)
  * the include path one by one until it finds the file or reaches
  * the end of the path.
  */
-static const llvm::MemoryBuffer*
+static const MemoryBuffer*
 inc_fopen(char *file,
           const DirectoryLookup* from_dir,
           const DirectoryLookup*& cur_dir,
           FileID from_file,
           FileID& cur_file)
 {
-    const llvm::MemoryBuffer *in;
+    const MemoryBuffer *in;
     char *c;
     char *pb, *p1, *p2, *file2 = NULL;
 
@@ -5381,7 +5384,7 @@ pp_extra_stdmac(const char **macros)
 static void
 make_tok_num(Token * tok, const IntNum& val)
 {
-    llvm::SmallString<64> str;
+    SmallString<64> str;
     val.getStr(str);
     tok->text = nasm_strdup(str.c_str());
     tok->type = TOK_NUMBER;

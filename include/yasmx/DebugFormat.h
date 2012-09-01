@@ -32,6 +32,7 @@
 #include <memory>
 
 #include "llvm/ADT/StringRef.h"
+#include "yasmx/Basic/LLVM.h"
 #include "yasmx/Config/export.h"
 
 #include "yasmx/Module.h"
@@ -62,7 +63,7 @@ public:
     const DebugFormatModule& getModule() const { return m_module; }
 
     /// Add directive handlers.
-    virtual void AddDirectives(Directives& dirs, llvm::StringRef parser);
+    virtual void AddDirectives(Directives& dirs, StringRef parser);
 
     /// Generate debugging information bytecodes.
     /// @param objfmt   object format
@@ -94,7 +95,7 @@ public:
 
     /// Get the module type.
     /// @return "DebugFormat".
-    llvm::StringRef getType() const;
+    StringRef getType() const;
 
     /// Determine if object is acceptable to debug format.
     /// @param object       object
@@ -113,8 +114,8 @@ public:
     DebugFormatModuleImpl() {}
     ~DebugFormatModuleImpl() {}
 
-    llvm::StringRef getName() const { return DebugFormatImpl::getName(); }
-    llvm::StringRef getKeyword() const { return DebugFormatImpl::getKeyword(); }
+    StringRef getName() const { return DebugFormatImpl::getName(); }
+    StringRef getKeyword() const { return DebugFormatImpl::getKeyword(); }
 
     bool isOkObject(Object& object) const
     { return DebugFormatImpl::isOkObject(object); }

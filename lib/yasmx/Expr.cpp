@@ -40,6 +40,7 @@
 
 
 using namespace yasm;
+using llvm::APFloat;
 
 /// Look for simple identities that make the entire result constant:
 /// 0*&x, -1|x, etc.
@@ -85,52 +86,52 @@ isRightIdentity(Op::Op op, const IntNum& intn)
 }
 
 bool
-yasm::CalcFloat(llvm::APFloat* lhs,
+yasm::CalcFloat(APFloat* lhs,
                 Op::Op op,
-                const llvm::APFloat& rhs,
+                const APFloat& rhs,
                 SourceLocation source,
                 DiagnosticsEngine& diags)
 {
-    llvm::APFloat::opStatus status;
+    APFloat::opStatus status;
     switch (op)
     {
         case Op::ADD:
-            status = lhs->add(rhs, llvm::APFloat::rmNearestTiesToEven);
+            status = lhs->add(rhs, APFloat::rmNearestTiesToEven);
             break;
         case Op::SUB:
-            status = lhs->subtract(rhs, llvm::APFloat::rmNearestTiesToEven);
+            status = lhs->subtract(rhs, APFloat::rmNearestTiesToEven);
             break;
         case Op::MUL:
-            status = lhs->multiply(rhs, llvm::APFloat::rmNearestTiesToEven);
+            status = lhs->multiply(rhs, APFloat::rmNearestTiesToEven);
             break;
         case Op::DIV:
         case Op::SIGNDIV:
-            status = lhs->divide(rhs, llvm::APFloat::rmNearestTiesToEven);
+            status = lhs->divide(rhs, APFloat::rmNearestTiesToEven);
             break;
         case Op::MOD:
         case Op::SIGNMOD:
-            status = lhs->mod(rhs, llvm::APFloat::rmNearestTiesToEven);
+            status = lhs->mod(rhs, APFloat::rmNearestTiesToEven);
             break;
         default:
-            status = llvm::APFloat::opInvalidOp;
+            status = APFloat::opInvalidOp;
             break;
     }
 
-    if (status & llvm::APFloat::opInvalidOp)
+    if (status & APFloat::opInvalidOp)
     {
         diags.Report(source, diag::err_float_invalid_op);
         return false;
     }
-    if (status & llvm::APFloat::opDivByZero)
+    if (status & APFloat::opDivByZero)
     {
         diags.Report(source, diag::err_divide_by_zero);
         return false;
     }
-    if (status & llvm::APFloat::opOverflow)
+    if (status & APFloat::opOverflow)
         diags.Report(source, diag::warn_float_overflow);
-    else if (status & llvm::APFloat::opUnderflow)
+    else if (status & APFloat::opUnderflow)
         diags.Report(source, diag::warn_float_underflow);
-    else if (status & llvm::APFloat::opInexact)
+    else if (status & APFloat::opInexact)
         diags.Report(source, diag::warn_float_inexact);
     return true;
 }
@@ -176,7 +177,7 @@ ExprTerm::ExprTerm(std::auto_ptr<IntNum> intn,
     intn->swap(static_cast<IntNum&>(m_data.intn));
 }
 
-ExprTerm::ExprTerm(std::auto_ptr<llvm::APFloat> flt,
+ExprTerm::ExprTerm(std::auto_ptr<APFloat> flt,
                    SourceLocation source,
                    int depth)
     : m_source(source), m_type(FLOAT), m_depth(depth)
@@ -194,7 +195,7 @@ ExprTerm::ExprTerm(const ExprTerm& term)
         tmp.swap(static_cast<IntNum&>(m_data.intn));
     }
     else if (m_type == FLOAT)
-        m_data.flt = new llvm::APFloat(*term.m_data.flt);
+        m_data.flt = new APFloat(*term.m_data.flt);
     else
         m_data = term.m_data;
 }
@@ -215,11 +216,11 @@ ExprTerm::PromoteToFloat(const llvm::fltSemantics& semantics)
         return;
     assert (m_type == INT && "trying to promote non-integer");
 
-    std::auto_ptr<llvm::APFloat>
-        upconvf(new llvm::APFloat(semantics, llvm::APFloat::fcZero, false));
+    std::auto_ptr<APFloat>
+        upconvf(new APFloat(semantics, APFloat::fcZero, false));
     llvm::APInt upconvi(IntNum::BITVECT_NATIVE_SIZE, 0);
     upconvf->convertFromAPInt(*getIntNum()->getBV(&upconvi), true,
-                              llvm::APFloat::rmNearestTiesToEven);
+                              APFloat::rmNearestTiesToEven);
 
     Clear();
     m_type = FLOAT;
@@ -338,7 +339,7 @@ Expr::Expr(std::auto_ptr<IntNum> intn, SourceLocation source)
     m_terms.push_back(ExprTerm(intn, source));
 }
 
-Expr::Expr(std::auto_ptr<llvm::APFloat> flt, SourceLocation source)
+Expr::Expr(std::auto_ptr<APFloat> flt, SourceLocation source)
 {
     m_terms.push_back(ExprTerm(flt, source));
 }
@@ -565,7 +566,7 @@ TransformNegImpl(Expr& e,
                     break;
                 }
 
-                if (llvm::APFloat* fltn = child->getFloat())
+                if (APFloat* fltn = child->getFloat())
                 {
                     fltn->changeSign();
                     break;
@@ -723,7 +724,7 @@ again:
                 root.AddNumChild(-1);
             }
         }
-        else if (llvm::APFloat* fltn = child.getFloat())
+        else if (APFloat* fltn = child.getFloat())
         {
             // currently can only handle 5 basic ops: +, -, *, /, %
             if (op >= Op::NEG)
@@ -942,7 +943,7 @@ Expr::ExtractWRT()
     return lhs;
 }
 
-llvm::APFloat*
+APFloat*
 Expr::getFloat() const
 {
     assert(isFloat() && "expression is not float");
@@ -980,7 +981,7 @@ Expr::Write(pugi::xml_node out) const
         append_data(root, *i);
 
     // generate an easier to read version as an attribute
-    llvm::SmallString<128> ss;
+    SmallString<128> ss;
     llvm::raw_svector_ostream oss(ss);
     Print(oss);
     oss << '\0';
@@ -991,7 +992,7 @@ Expr::Write(pugi::xml_node out) const
 #endif // WITH_XML
 
 void
-ExprTerm::Print(llvm::raw_ostream& os, int base) const
+ExprTerm::Print(raw_ostream& os, int base) const
 {
     switch (m_type)
     {
@@ -1010,7 +1011,7 @@ ExprTerm::Print(llvm::raw_ostream& os, int base) const
 }
 
 static void
-Infix(llvm::raw_ostream& os, const Expr& e, int base, int pos=-1)
+Infix(raw_ostream& os, const Expr& e, int base, int pos=-1)
 {
     const char* opstr = "";
     const ExprTerms& terms = e.getTerms();
@@ -1073,7 +1074,7 @@ Infix(llvm::raw_ostream& os, const Expr& e, int base, int pos=-1)
         default:            opstr = " !UNK! "; break;
     }
 
-    typedef llvm::SmallVector<int, 32> CVector;
+    typedef SmallVector<int, 32> CVector;
     CVector children;
     const ExprTerm& root = terms[pos];
     --pos;
@@ -1112,7 +1113,7 @@ Infix(llvm::raw_ostream& os, const Expr& e, int base, int pos=-1)
 }
 
 void
-Expr::Print(llvm::raw_ostream& os, int base) const
+Expr::Print(raw_ostream& os, int base) const
 {
     Infix(os, *this, base);
 }

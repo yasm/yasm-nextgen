@@ -48,28 +48,28 @@ NasmPreproc::~NasmPreproc()
 }
 
 void
-NasmPreproc::PreInclude(llvm::StringRef filename)
+NasmPreproc::PreInclude(StringRef filename)
 {
     Predef p = { Predef::PREINC, filename };
     m_predefs.push_back(p);
 }
 
 void
-NasmPreproc::PredefineMacro(llvm::StringRef macronameval)
+NasmPreproc::PredefineMacro(StringRef macronameval)
 {
     Predef p = { Predef::PREDEF, macronameval };
     m_predefs.push_back(p);
 }
 
 void
-NasmPreproc::UndefineMacro(llvm::StringRef macroname)
+NasmPreproc::UndefineMacro(StringRef macroname)
 {
     Predef p = { Predef::UNDEF, macroname };
     m_predefs.push_back(p);
 }
 
 void
-NasmPreproc::DefineBuiltin(llvm::StringRef macronameval)
+NasmPreproc::DefineBuiltin(StringRef macronameval)
 {
     Predef p = { Predef::BUILTIN, macronameval };
     m_predefs.push_back(p);
@@ -103,7 +103,7 @@ NasmPreproc::RegisterBuiltinMacros()
 }
 
 Lexer*
-NasmPreproc::CreateLexer(FileID fid, const llvm::MemoryBuffer* input_buffer)
+NasmPreproc::CreateLexer(FileID fid, const MemoryBuffer* input_buffer)
 {
     return new NasmLexer(fid, input_buffer, *this);
 }

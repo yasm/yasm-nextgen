@@ -81,19 +81,19 @@ XdfObject::isOkObject(Object& object)
     return true;
 }
 
-std::vector<llvm::StringRef>
+std::vector<StringRef>
 XdfObject::getDebugFormatKeywords()
 {
     static const char* keywords[] = {"null"};
     size_t keywords_size = sizeof(keywords)/sizeof(keywords[0]);
-    return std::vector<llvm::StringRef>(keywords, keywords+keywords_size);
+    return std::vector<StringRef>(keywords, keywords+keywords_size);
 }
 
 namespace {
 class XdfOutput : public BytecodeStreamOutput
 {
 public:
-    XdfOutput(llvm::raw_ostream& os, Object& object, DiagnosticsEngine& diags);
+    XdfOutput(raw_ostream& os, Object& object, DiagnosticsEngine& diags);
     ~XdfOutput();
 
     void OutputSection(Section& sect);
@@ -112,9 +112,7 @@ private:
 };
 } // anonymous namespace
 
-XdfOutput::XdfOutput(llvm::raw_ostream& os,
-                     Object& object,
-                     DiagnosticsEngine& diags)
+XdfOutput::XdfOutput(raw_ostream& os, Object& object, DiagnosticsEngine& diags)
     : BytecodeStreamOutput(os, diags)
     , m_object(object)
     , m_no_output(diags)
@@ -306,7 +304,7 @@ XdfOutput::OutputSymbol(const Symbol& sym,
 }
 
 void
-XdfObject::Output(llvm::raw_fd_ostream& os,
+XdfObject::Output(raw_fd_ostream& os,
                   bool all_syms,
                   DebugFormat& dbgfmt,
                   DiagnosticsEngine& diags)
@@ -415,7 +413,7 @@ XdfObject::Output(llvm::raw_fd_ostream& os,
 }
 
 bool
-XdfObject::Taste(const llvm::MemoryBuffer& in,
+XdfObject::Taste(const MemoryBuffer& in,
                  /*@out@*/ std::string* arch_keyword,
                  /*@out@*/ std::string* machine)
 {
@@ -439,7 +437,7 @@ namespace {
 class ReadString
 {
 public:
-    ReadString(const llvm::MemoryBuffer& in,
+    ReadString(const MemoryBuffer& in,
                unsigned long strtab_offset,
                unsigned long strtab_len,
                DiagnosticsEngine& diags)
@@ -449,7 +447,7 @@ public:
         , m_diags(diags)
     {}
 
-    llvm::StringRef
+    StringRef
     operator() (unsigned long str_index)
     {
         if (str_index < m_offset || str_index >= m_offset+m_len)
@@ -461,7 +459,7 @@ public:
     }
 
 private:
-    const llvm::MemoryBuffer& m_in;
+    const MemoryBuffer& m_in;
     unsigned long m_offset;
     unsigned long m_len;
     DiagnosticsEngine& m_diags;
@@ -480,7 +478,7 @@ NoAddSpan(Bytecode& bc,
 bool
 XdfObject::Read(SourceManager& sm, DiagnosticsEngine& diags)
 {
-    const llvm::MemoryBuffer& in = *sm.getBuffer(sm.getMainFileID());
+    const MemoryBuffer& in = *sm.getBuffer(sm.getMainFileID());
     InputBuffer inbuf(in);
     inbuf.setLittleEndian();
 
@@ -533,7 +531,7 @@ XdfObject::Read(SourceManager& sm, DiagnosticsEngine& diags)
 
         // get section name from section symbol entry
         inbuf.setPosition(symtab_offset+name_sym_index*SYMBOL_SIZE+8);
-        llvm::StringRef sectname = read_string(ReadU32(inbuf));
+        StringRef sectname = read_string(ReadU32(inbuf));
 
         std::auto_ptr<Section> section(
             new Section(sectname, xsect->bits != 0, bss, SourceLocation()));
@@ -546,7 +544,7 @@ XdfObject::Read(SourceManager& sm, DiagnosticsEngine& diags)
         {
             Bytecode& gap =
                 section->AppendGap(xsect->size, SourceLocation());
-            llvm::IntrusiveRefCntPtr<DiagnosticIDs> diagids(new DiagnosticIDs);
+            IntrusiveRefCntPtr<DiagnosticIDs> diagids(new DiagnosticIDs);
             DiagnosticsEngine nodiags(diagids);
             gap.CalcLen(NoAddSpan, nodiags); // force length calculation
         }
@@ -580,7 +578,7 @@ XdfObject::Read(SourceManager& sm, DiagnosticsEngine& diags)
     {
         unsigned long sym_scnum = ReadU32(inbuf);           // section number
         unsigned long value = ReadU32(inbuf);               // value
-        llvm::StringRef symname = read_string(ReadU32(inbuf));// name
+        StringRef symname = read_string(ReadU32(inbuf));    // name
         unsigned long flags = ReadU32(inbuf);               // flags
 
         SymbolRef sym = m_object.getSymbol(symname);
@@ -644,7 +642,7 @@ XdfObject::Read(SourceManager& sm, DiagnosticsEngine& diags)
 Section*
 XdfObject::AddDefaultSection()
 {
-    llvm::IntrusiveRefCntPtr<DiagnosticIDs> diagids(new DiagnosticIDs);
+    IntrusiveRefCntPtr<DiagnosticIDs> diagids(new DiagnosticIDs);
     DiagnosticsEngine diags(diagids);
     Section* section = AppendSection(".text", SourceLocation(), diags);
     section->setDefault(true);
@@ -652,7 +650,7 @@ XdfObject::AddDefaultSection()
 }
 
 Section*
-XdfObject::AppendSection(llvm::StringRef name,
+XdfObject::AppendSection(StringRef name,
                          SourceLocation source,
                          DiagnosticsEngine& diags)
 {
@@ -689,7 +687,7 @@ XdfObject::DirSection(DirectiveInfo& info, DiagnosticsEngine& diags)
                      diag::err_value_string_or_id);
         return;
     }
-    llvm::StringRef sectname = sectname_nv.getString();
+    StringRef sectname = sectname_nv.getString();
 
     Section* sect = m_object.FindSection(sectname);
     bool first = true;
@@ -780,7 +778,7 @@ XdfObject::DirSection(DirectiveInfo& info, DiagnosticsEngine& diags)
 }
 
 void
-XdfObject::AddDirectives(Directives& dirs, llvm::StringRef parser)
+XdfObject::AddDirectives(Directives& dirs, StringRef parser)
 {
     static const Directives::Init<XdfObject> nasm_dirs[] =
     {

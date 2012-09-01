@@ -32,7 +32,7 @@
 
 using namespace yasm;
 
-Symbol::Symbol(llvm::StringRef name)
+Symbol::Symbol(StringRef name)
     : m_name(name),
       m_type(UNKNOWN),
       m_status(NOSTATUS),

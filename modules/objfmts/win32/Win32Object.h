@@ -42,31 +42,31 @@ public:
     Win32Object(const ObjectFormatModule& module, Object& object);
     virtual ~Win32Object();
 
-    virtual void AddDirectives(Directives& dirs, llvm::StringRef parser);
-    virtual void InitSymbols(llvm::StringRef parser);
+    virtual void AddDirectives(Directives& dirs, StringRef parser);
+    virtual void InitSymbols(StringRef parser);
 
     //virtual void InitSymbols()
     //virtual void Read()
     //virtual void Output()
 
-    static llvm::StringRef getName() { return "Win32"; }
-    static llvm::StringRef getKeyword() { return "win32"; }
-    static llvm::StringRef getExtension() { return ".obj"; }
+    static StringRef getName() { return "Win32"; }
+    static StringRef getKeyword() { return "win32"; }
+    static StringRef getExtension() { return ".obj"; }
     static unsigned int getDefaultX86ModeBits() { return 32; }
 
-    static llvm::StringRef getDefaultDebugFormatKeyword()
+    static StringRef getDefaultDebugFormatKeyword()
     { return CoffObject::getDefaultDebugFormatKeyword(); }
-    static std::vector<llvm::StringRef> getDebugFormatKeywords();
+    static std::vector<StringRef> getDebugFormatKeywords();
 
     static bool isOkObject(Object& object)
     { return CoffObject::isOkObject(object); }
-    static bool Taste(const llvm::MemoryBuffer& in,
+    static bool Taste(const MemoryBuffer& in,
                       /*@out@*/ std::string* arch_keyword,
                       /*@out@*/ std::string* machine)
     { return false; }
 
 protected:
-    virtual bool InitSection(llvm::StringRef name,
+    virtual bool InitSection(StringRef name,
                              Section& section,
                              CoffSection* coffsect,
                              SourceLocation source,

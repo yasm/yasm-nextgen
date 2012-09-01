@@ -29,7 +29,7 @@
 /// POSSIBILITY OF SUCH DAMAGE.
 /// @endlicense
 ///
-#include "llvm/ADT/StringRef.h"
+#include "yasmx/Basic/LLVM.h"
 #include "yasmx/Config/export.h"
 
 
@@ -39,7 +39,7 @@ namespace yasm
 /// Load a plugin.
 /// @return False on failure
 YASM_LIB_EXPORT
-bool LoadPlugin(llvm::StringRef name);
+bool LoadPlugin(StringRef name);
 YASM_LIB_EXPORT
 void UnloadPlugins();
 

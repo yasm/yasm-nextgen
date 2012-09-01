@@ -33,10 +33,7 @@
 
 using namespace yasm;
 
-Section::Section(llvm::StringRef name,
-                 bool code,
-                 bool bss,
-                 SourceLocation source)
+Section::Section(StringRef name, bool code, bool bss, SourceLocation source)
     : BytecodeContainer(this)
     , m_name(name)
     , m_object(0)

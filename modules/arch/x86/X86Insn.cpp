@@ -390,7 +390,7 @@ X86Prefix::~X86Prefix()
 }
 
 void
-X86Prefix::Put(llvm::raw_ostream& os) const
+X86Prefix::Put(raw_ostream& os) const
 {
     // TODO
     os << "PREFIX";
@@ -411,7 +411,7 @@ X86Prefix::Write(pugi::xml_node out) const
         case REX:       type = "REX"; break;
         case ACQREL:    type = "ACQREL"; break;
     }
-    append_data(root, llvm::Twine::utohexstr(m_value).str());
+    append_data(root, Twine::utohexstr(m_value).str());
     return root;
 }
 #endif // WITH_XML
@@ -1947,7 +1947,7 @@ CpuFindReverse(unsigned int cpu0, unsigned int cpu1, unsigned int cpu2)
 }
 
 Arch::InsnPrefix
-X86Arch::ParseCheckInsnPrefix(llvm::StringRef id,
+X86Arch::ParseCheckInsnPrefix(StringRef id,
                               SourceLocation source,
                               DiagnosticsEngine& diags) const
 {
@@ -2069,9 +2069,8 @@ X86Insn::DoWrite(pugi::xml_node out) const
     append_child(root, "NumInfo", m_num_info);
     append_child(root, "ModeBits", m_mode_bits);
 
-    append_child(root, "SuffixFlags", llvm::Twine::utohexstr(m_suffix).str());
-    append_child(root, "MiscFlags",
-                 llvm::Twine::utohexstr(m_misc_flags).str());
+    append_child(root, "SuffixFlags", Twine::utohexstr(m_suffix).str());
+    append_child(root, "MiscFlags", Twine::utohexstr(m_misc_flags).str());
     append_child(root, "Parser", m_parser);
 
     if (m_force_strict)

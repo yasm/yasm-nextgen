@@ -33,6 +33,7 @@
 #include <vector>
 
 #include "llvm/ADT/SmallVector.h"
+#include "yasmx/Basic/LLVM.h"
 #include "yasmx/Basic/SourceLocation.h"
 #include "yasmx/Config/export.h"
 #include "yasmx/DebugDumper.h"
@@ -55,7 +56,7 @@ class YASM_LIB_EXPORT TargetModifier
 public:
     TargetModifier() {}
     virtual ~TargetModifier();
-    virtual void Put(llvm::raw_ostream& os) const = 0;
+    virtual void Put(raw_ostream& os) const = 0;
 
 #ifdef WITH_XML
     /// Write an XML representation.  For debugging purposes.
@@ -260,7 +261,7 @@ class YASM_LIB_EXPORT Prefix
 public:
     Prefix() {}
     virtual ~Prefix();
-    virtual void Put(llvm::raw_ostream& os) const = 0;
+    virtual void Put(raw_ostream& os) const = 0;
 
 #ifdef WITH_XML
     /// Write an XML representation.  For debugging purposes.
@@ -281,7 +282,7 @@ class YASM_LIB_EXPORT Insn
 public:
     typedef std::auto_ptr<Insn> Ptr;
 
-    typedef llvm::SmallVector<Operand, 3> Operands;
+    typedef SmallVector<Operand, 3> Operands;
     typedef std::vector<std::pair<const Prefix*, SourceLocation> > Prefixes;
 
     Insn();
@@ -360,15 +361,15 @@ private:
     const Insn& operator=(const Insn&);
 };
 
-inline llvm::raw_ostream&
-operator<< (llvm::raw_ostream& os, const TargetModifier& tmod)
+inline raw_ostream&
+operator<< (raw_ostream& os, const TargetModifier& tmod)
 {
     tmod.Put(os);
     return os;
 }
 
-inline llvm::raw_ostream&
-operator<< (llvm::raw_ostream& os, const Prefix& prefix)
+inline raw_ostream&
+operator<< (raw_ostream& os, const Prefix& prefix)
 {
     prefix.Put(os);
     return os;

@@ -30,7 +30,7 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //
-#include "llvm/ADT/StringRef.h"
+#include "yasmx/Basic/LLVM.h"
 
 namespace yasm
 {
@@ -72,8 +72,7 @@ public:
 
     /// LookupFile - Lookup the specified file in this search path, returning it
     /// if it exists or returning null if not.
-    const FileEntry* LookupFile(llvm::StringRef Filename,
-                                HeaderSearch& HS) const;
+    const FileEntry* LookupFile(StringRef Filename, HeaderSearch& HS) const;
 };
 
 } // namespace yasm

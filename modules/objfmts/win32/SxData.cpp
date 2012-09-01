@@ -56,7 +56,7 @@ public:
     /// Convert a bytecode into its byte representation.
     bool Output(Bytecode& bc, BytecodeOutput& bc_out);
 
-    llvm::StringRef getType() const;
+    StringRef getType() const;
 
     SxData* clone() const;
 
@@ -108,7 +108,7 @@ SxData::Output(Bytecode& bc, BytecodeOutput& bc_out)
     return true;
 }
 
-llvm::StringRef
+StringRef
 SxData::getType() const
 {
     return "yasm::objfmt::SxData";

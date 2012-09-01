@@ -34,12 +34,11 @@
 #include <vector>
 
 #include "llvm/ADT/StringRef.h"
+#include "yasmx/Basic/LLVM.h"
 #include "yasmx/Config/export.h"
 
 #include "yasmx/Module.h"
 
-
-namespace llvm { class MemoryBuffer; class raw_fd_ostream; }
 
 namespace yasm
 {
@@ -69,13 +68,13 @@ public:
     const ObjectFormatModule& getModule() const { return m_module; }
 
     /// Add directive handlers.
-    virtual void AddDirectives(Directives& dirs, llvm::StringRef parser);
+    virtual void AddDirectives(Directives& dirs, StringRef parser);
 
     /// Initialize symbols (default and special symbols).
     /// Called prior to assembly process.
     /// Default implementation does nothing.
     /// @param parser       parser keyword
-    virtual void InitSymbols(llvm::StringRef parser);
+    virtual void InitSymbols(StringRef parser);
 
     /// Read object file into associated object.
     /// May create sections, relocations, and bytecodes, as well as modify
@@ -96,7 +95,7 @@ public:
     /// @param dbgfmt       debugging format
     /// @param diags        diagnostic reporting
     /// @note Errors and warnings are reported via diags.
-    virtual void Output(llvm::raw_fd_ostream& os,
+    virtual void Output(raw_fd_ostream& os,
                         bool all_syms,
                         DebugFormat& dbgfmt,
                         DiagnosticsEngine& diags) = 0;
@@ -113,7 +112,7 @@ public:
     /// @param source   source location
     /// @param diags    diagnostic reporting
     /// @return New section.
-    virtual Section* AppendSection(llvm::StringRef name,
+    virtual Section* AppendSection(StringRef name,
                                    SourceLocation source,
                                    DiagnosticsEngine& diags) = 0;
 
@@ -138,11 +137,11 @@ public:
 
     /// Get the module type.
     /// @return "ObjectFormat".
-    llvm::StringRef getType() const;
+    StringRef getType() const;
 
     /// Get the default file extension (including the '.').
     /// @return File extension.
-    virtual llvm::StringRef getExtension() const = 0;
+    virtual StringRef getExtension() const = 0;
 
     /// Get default (starting) x86 BITS setting.  This only appies to the
     /// x86 architecture; other architectures ignore this setting.
@@ -154,11 +153,11 @@ public:
     /// ("null") should always be in this list so it's possible to
     /// have no debug output.
     /// @return Vector of debug format keywords.
-    virtual std::vector<llvm::StringRef> getDebugFormatKeywords() const = 0;
+    virtual std::vector<StringRef> getDebugFormatKeywords() const = 0;
 
     /// Get default debug format keyword.
     /// @return Default debug format keyword.
-    virtual llvm::StringRef getDefaultDebugFormatKeyword() const = 0;
+    virtual StringRef getDefaultDebugFormatKeyword() const = 0;
 
     /// Determine if object is acceptable to object format.
     /// @param object       object
@@ -171,7 +170,7 @@ public:
     /// @param arch_keyword architecture keyword (output)
     /// @param machine      machine (output)
     /// @return True if object file readable, false otherwise.
-    virtual bool Taste(const llvm::MemoryBuffer& in,
+    virtual bool Taste(const MemoryBuffer& in,
                        /*@out@*/ std::string* arch_keyword,
                        /*@out@*/ std::string* machine) const = 0;
 
@@ -187,22 +186,22 @@ public:
     ObjectFormatModuleImpl() {}
     ~ObjectFormatModuleImpl() {}
 
-    llvm::StringRef getName() const { return ObjectFormatImpl::getName(); }
-    llvm::StringRef getKeyword() const { return ObjectFormatImpl::getKeyword(); }
+    StringRef getName() const { return ObjectFormatImpl::getName(); }
+    StringRef getKeyword() const { return ObjectFormatImpl::getKeyword(); }
 
-    llvm::StringRef getExtension() const
+    StringRef getExtension() const
     { return ObjectFormatImpl::getExtension(); }
     unsigned int getDefaultX86ModeBits() const
     { return ObjectFormatImpl::getDefaultX86ModeBits(); }
 
-    std::vector<llvm::StringRef> getDebugFormatKeywords() const
+    std::vector<StringRef> getDebugFormatKeywords() const
     { return ObjectFormatImpl::getDebugFormatKeywords(); }
-    llvm::StringRef getDefaultDebugFormatKeyword() const
+    StringRef getDefaultDebugFormatKeyword() const
     { return ObjectFormatImpl::getDefaultDebugFormatKeyword(); }
 
     bool isOkObject(Object& object) const
     { return ObjectFormatImpl::isOkObject(object); }
-    bool Taste(const llvm::MemoryBuffer& in,
+    bool Taste(const MemoryBuffer& in,
                /*@out@*/ std::string* arch_keyword,
                /*@out@*/ std::string* machine) const
     { return ObjectFormatImpl::Taste(in, arch_keyword, machine); }

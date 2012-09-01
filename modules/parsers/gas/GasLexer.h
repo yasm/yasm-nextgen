@@ -63,7 +63,7 @@ class YASM_STD_EXPORT GasLexer : public Lexer
 {
 public:
     GasLexer(FileID fid,
-             const llvm::MemoryBuffer* input_buffer,
+             const MemoryBuffer* input_buffer,
              Preprocessor& pp);
     GasLexer(SourceLocation file_loc,
              const char* start,

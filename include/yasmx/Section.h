@@ -33,6 +33,7 @@
 #include <string>
 
 #include "llvm/ADT/StringRef.h"
+#include "yasmx/Basic/LLVM.h"
 #include "yasmx/Config/export.h"
 #include "yasmx/Support/ptr_vector.h"
 
@@ -68,7 +69,7 @@ public:
     ///                 uninitialized space
     /// @param source   source location of section declaration (ignored if
     ///                 section already exists)
-    Section(llvm::StringRef name, bool code, bool bss, SourceLocation source);
+    Section(StringRef name, bool code, bool bss, SourceLocation source);
 
     ~Section();
 
@@ -120,12 +121,12 @@ public:
 
     /// Get name of a section.
     /// @return Section name.
-    llvm::StringRef getName() const { return m_name; }
+    StringRef getName() const { return m_name; }
 
     /// Match name of a section.
     /// @param Section name.
     /// @return True if section name matches, false if not.
-    bool isName(llvm::StringRef name) const { return m_name == name; }
+    bool isName(StringRef name) const { return m_name == name; }
 
     /// Set section symbol.
     /// @param sym  symbol

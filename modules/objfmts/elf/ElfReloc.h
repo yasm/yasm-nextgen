@@ -34,8 +34,6 @@
 #include "ElfTypes.h"
 
 
-namespace llvm { class MemoryBuffer; }
-
 namespace yasm
 {
 
@@ -51,7 +49,7 @@ public:
     // Constructor that reads from memory buffer.
     ElfReloc(const ElfConfig& config,
              const ElfSymtab& symtab,
-             const llvm::MemoryBuffer& in,
+             const MemoryBuffer& in,
              unsigned long* pos,
              bool rela);
     ElfReloc(SymbolRef sym, const IntNum& addr);

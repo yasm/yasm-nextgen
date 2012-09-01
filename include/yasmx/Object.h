@@ -33,6 +33,7 @@
 #include <string>
 
 #include "llvm/ADT/StringRef.h"
+#include "yasmx/Basic/LLVM.h"
 #include "yasmx/Config/export.h"
 #include "yasmx/Support/ptr_vector.h"
 #include "yasmx/Support/scoped_ptr.h"
@@ -40,8 +41,6 @@
 #include "yasmx/Location.h"
 #include "yasmx/SymbolRef.h"
 
-
-namespace llvm { class Twine; }
 
 namespace yasm
 {
@@ -87,9 +86,7 @@ public:
     /// @param src_filename     source filename (e.g. "file.asm")
     /// @param obj_filename     object filename (e.g. "file.o")
     /// @param arch             architecture
-    Object(llvm::StringRef src_filename,
-           llvm::StringRef obj_filename,
-           Arch* arch);
+    Object(StringRef src_filename, StringRef obj_filename, Arch* arch);
 
     /// Destructor.
     ~Object();
@@ -100,19 +97,19 @@ public:
 
     /// Change the source filename for an object.
     /// @param src_filename new source filename (e.g. "file.asm")
-    void setSourceFilename(llvm::StringRef src_filename);
+    void setSourceFilename(StringRef src_filename);
 
     /// Change the object filename for an object.
     /// @param obj_filename new object filename (e.g. "file.o")
-    void setObjectFilename(llvm::StringRef obj_filename);
+    void setObjectFilename(StringRef obj_filename);
 
     /// Get the source filename for an object.
     /// @return Source filename.
-    llvm::StringRef getSourceFilename() const { return m_src_filename; }
+    StringRef getSourceFilename() const { return m_src_filename; }
 
     /// Get the object filename for an object.
     /// @return Object filename.
-    llvm::StringRef getObjectFilename() const { return m_obj_filename; }
+    StringRef getObjectFilename() const { return m_obj_filename; }
 
     Options& getOptions() { return m_options; }
     Config& getConfig() { return m_config; }
@@ -138,7 +135,7 @@ public:
     /// Find a general section in an object, based on its name.
     /// @param name         section name
     /// @return Section matching name, or NULL if no match found.
-    /*@null@*/ Section* FindSection(llvm::StringRef name);
+    /*@null@*/ Section* FindSection(StringRef name);
 
     typedef stdx::ptr_vector<Section> Sections;
     typedef Sections::iterator section_iterator;
@@ -173,12 +170,12 @@ public:
     /// Find a symbol by name.
     /// @param name         symbol name
     /// @return Symbol matching name, or NULL if no match found.
-    SymbolRef FindSymbol(llvm::StringRef name);
+    SymbolRef FindSymbol(StringRef name);
 
     /// Get (creating if necessary) a symbol by name.
     /// @param name         symbol name
     /// @return Symbol matching name.
-    SymbolRef getSymbol(llvm::StringRef name);
+    SymbolRef getSymbol(StringRef name);
 
     /// Get a symbol for an arbitrary location.  The symbol may already exist,
     /// or a new unnamed one may be created.
@@ -206,16 +203,16 @@ public:
     /// @note Does /not/ index the symbol by name.
     /// @param name     symbol name
     /// @return Reference to symbol.
-    SymbolRef AppendSymbol(llvm::StringRef name);
+    SymbolRef AppendSymbol(StringRef name);
 
     /// Have the object manage an arbitrary symbol.
     /// @note Does /not/ index the symbol by name.
     /// @param name     symbol name
     /// @return Reference to symbol.
-    SymbolRef AddNonTableSymbol(llvm::StringRef name);
+    SymbolRef AddNonTableSymbol(StringRef name);
 
     /// Rename a symbol.
-    void RenameSymbol(SymbolRef sym, llvm::StringRef name);
+    void RenameSymbol(SymbolRef sym, StringRef name);
 
     /// Declare all used but undefined symbols extern.
     void ExternUndefinedSymbols();
@@ -229,7 +226,7 @@ public:
     /// Add a special symbol.
     /// @param sym      symbol name
     /// @return Reference to symbol.
-    SymbolRef AddSpecialSymbol(llvm::StringRef name);
+    SymbolRef AddSpecialSymbol(StringRef name);
 
     /// Find a special symbol.  Special symbols are generally used to generate
     /// special relocation types via the WRT mechanism.
@@ -237,7 +234,7 @@ public:
     /// @param name         symbol name (not including any parser-specific
     ///                     prefix)
     /// @return NULL if unrecognized, otherwise special symbol.
-    SymbolRef FindSpecialSymbol(llvm::StringRef name);
+    SymbolRef FindSpecialSymbol(StringRef name);
 
     /*@null@*/ Section* getCurSection() { return m_cur_section; }
     const /*@null@*/ Section* getCurSection() const { return m_cur_section; }

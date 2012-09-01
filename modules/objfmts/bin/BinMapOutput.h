@@ -30,8 +30,6 @@
 #include "BinLink.h"
 
 
-namespace llvm { class raw_ostream; }
-
 namespace yasm
 {
 
@@ -45,7 +43,7 @@ namespace objfmt
 class YASM_STD_EXPORT BinMapOutput
 {
 public:
-    BinMapOutput(llvm::raw_ostream& os,
+    BinMapOutput(raw_ostream& os,
                  const Object& object,
                  const IntNum& origin,
                  const BinGroups& groups,
@@ -68,7 +66,7 @@ private:
     // address width
     int m_bytes;
 
-    llvm::raw_ostream& m_os;        // map output file
+    raw_ostream& m_os;          // map output file
     const Object& m_object;     // object
     const IntNum& m_origin;     // origin
     const BinGroups& m_groups;  // section groups

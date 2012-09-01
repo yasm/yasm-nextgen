@@ -39,18 +39,19 @@
 
 
 using namespace yasm;
+using llvm::APInt;
 
 /// Static bitvect used for conversions.
-static llvm::APInt conv_bv(IntNum::BITVECT_NATIVE_SIZE, 0);
+static APInt conv_bv(IntNum::BITVECT_NATIVE_SIZE, 0);
 
 /// Static bitvects used for computation.
-static llvm::APInt result(IntNum::BITVECT_NATIVE_SIZE, 0);
-static llvm::APInt spare(IntNum::BITVECT_NATIVE_SIZE, 0);
-static llvm::APInt op1static(IntNum::BITVECT_NATIVE_SIZE, 0);
-static llvm::APInt op2static(IntNum::BITVECT_NATIVE_SIZE, 0);
+static APInt result(IntNum::BITVECT_NATIVE_SIZE, 0);
+static APInt spare(IntNum::BITVECT_NATIVE_SIZE, 0);
+static APInt op1static(IntNum::BITVECT_NATIVE_SIZE, 0);
+static APInt op2static(IntNum::BITVECT_NATIVE_SIZE, 0);
 
 /// Static bitvect used for sign extension.
-static llvm::APInt signext_bv(IntNum::BITVECT_NATIVE_SIZE, 0);
+static APInt signext_bv(IntNum::BITVECT_NATIVE_SIZE, 0);
 
 enum
 {
@@ -60,7 +61,7 @@ enum
 };
 
 bool
-yasm::isOkSize(const llvm::APInt& intn,
+yasm::isOkSize(const APInt& intn,
                unsigned int size,
                unsigned int rshift,
                int rangetype)
@@ -88,7 +89,7 @@ yasm::isOkSize(const llvm::APInt& intn,
 }
 
 void
-IntNum::setBV(const llvm::APInt& bv)
+IntNum::setBV(const APInt& bv)
 {
     if (bv.getMinSignedBits() <= SV_BITS)
     {
@@ -105,13 +106,13 @@ IntNum::setBV(const llvm::APInt& bv)
     else
     {
         m_type = INTNUM_BV;
-        m_val.bv = new llvm::APInt(bv);
+        m_val.bv = new APInt(bv);
     }
     *m_val.bv = m_val.bv->sextOrTrunc(BITVECT_NATIVE_SIZE);
 }
 
-const llvm::APInt*
-IntNum::getBV(llvm::APInt* bv) const
+const APInt*
+IntNum::getBV(APInt* bv) const
 {
     if (m_type == INTNUM_BV)
         return m_val.bv;
@@ -126,8 +127,8 @@ IntNum::getBV(llvm::APInt* bv) const
     return bv;
 }
 
-llvm::APInt*
-IntNum::getBV(llvm::APInt* bv)
+APInt*
+IntNum::getBV(APInt* bv)
 {
     if (m_type == INTNUM_BV)
         return m_val.bv;
@@ -154,13 +155,13 @@ HexDigitValue(char ch)
 }
 
 bool
-IntNum::setStr(llvm::StringRef str, unsigned int radix)
+IntNum::setStr(StringRef str, unsigned int radix)
 {
     // Each computation below needs to know if its negative
     bool is_neg = (str[0] == '-');
     unsigned int minbits = is_neg ? 1 : 0;
     size_t len = str.size();
-    llvm::StringRef::iterator begin = str.begin();
+    StringRef::iterator begin = str.begin();
 
     if (is_neg)
     {
@@ -191,8 +192,7 @@ IntNum::setStr(llvm::StringRef str, unsigned int radix)
     {
         // shortcut "short" case
         SmallValue v = 0;
-        for (llvm::StringRef::iterator i = begin, end = str.end();
-             i != end; ++i)
+        for (StringRef::iterator i = begin, end = str.end(); i != end; ++i)
         {
             unsigned int c = HexDigitValue(*i);
             assert(c < radix && "invalid digit for given radix");
@@ -209,15 +209,15 @@ IntNum::setStr(llvm::StringRef str, unsigned int radix)
     unsigned int shift =
         (radix == 16 ? 4 : radix == 8 ? 3 : radix == 2 ? 1 : 0);
 
-    llvm::APInt& radixval = op1static;
-    llvm::APInt& charval = op2static;
-    llvm::APInt& oldval = spare;
+    APInt& radixval = op1static;
+    APInt& charval = op2static;
+    APInt& oldval = spare;
 
     radixval = radix;
     oldval = 0;
 
     bool overflowed = false;
-    for (llvm::StringRef::iterator i=begin, end=str.end(); i != end; ++i)
+    for (StringRef::iterator i=begin, end=str.end(); i != end; ++i)
     {
         unsigned int c = HexDigitValue(*i);
 
@@ -258,7 +258,7 @@ IntNum::IntNum(const IntNum& rhs)
 {
     m_type = rhs.m_type;
     if (rhs.m_type == INTNUM_BV)
-        m_val.bv = new llvm::APInt(*rhs.m_val.bv);
+        m_val.bv = new APInt(*rhs.m_val.bv);
     else
         m_val.sv = rhs.m_val.sv;
 }
@@ -425,8 +425,8 @@ IntNum::CalcImpl(Op::Op op,
 
     // Always do computations with in full bit vector.
     // Bit vector results must be calculated through intermediate storage.
-    const llvm::APInt* op1 = getBV(&op1static);
-    const llvm::APInt* op2 = 0;
+    const APInt* op1 = getBV(&op1static);
+    const APInt* op2 = 0;
     if (operand)
         op2 = operand->getBV(&op2static);
 
@@ -605,7 +605,7 @@ void
 IntNum::SignExtend(unsigned int size)
 {
     // For now, always implement with full bit vector.
-    llvm::APInt* bv = getBV(&signext_bv);
+    APInt* bv = getBV(&signext_bv);
     *bv = bv->trunc(size).sext(BITVECT_NATIVE_SIZE);
     setBV(*bv);
 }
@@ -619,7 +619,7 @@ IntNum::set(IntNum::USmallValue val)
             *m_val.bv = val;
         else
         {
-            m_val.bv = new llvm::APInt(BITVECT_NATIVE_SIZE, val);
+            m_val.bv = new APInt(BITVECT_NATIVE_SIZE, val);
             m_type = INTNUM_BV;
         }
     }
@@ -770,7 +770,7 @@ IntNum::operator++()
     {
         if (m_type == INTNUM_SV)
         {
-            m_val.bv = getBV(new llvm::APInt(BITVECT_NATIVE_SIZE, 0));
+            m_val.bv = getBV(new APInt(BITVECT_NATIVE_SIZE, 0));
             m_type = INTNUM_BV;
         }
         ++(*m_val.bv);
@@ -788,7 +788,7 @@ IntNum::operator--()
     {
         if (m_type == INTNUM_SV)
         {
-            m_val.bv = getBV(new llvm::APInt(BITVECT_NATIVE_SIZE, 0));
+            m_val.bv = getBV(new APInt(BITVECT_NATIVE_SIZE, 0));
             m_type = INTNUM_BV;
         }
         --(*m_val.bv);
@@ -808,8 +808,8 @@ yasm::Compare(const IntNum& lhs, const IntNum& rhs)
         return 0;
     }
 
-    const llvm::APInt* op1 = lhs.getBV(&op1static);
-    const llvm::APInt* op2 = rhs.getBV(&op2static);
+    const APInt* op1 = lhs.getBV(&op1static);
+    const APInt* op2 = rhs.getBV(&op2static);
     if (op1->slt(*op2))
         return -1;
     if (op1->sgt(*op2))
@@ -823,8 +823,8 @@ yasm::operator==(const IntNum& lhs, const IntNum& rhs)
     if (lhs.m_type == IntNum::INTNUM_SV && rhs.m_type == IntNum::INTNUM_SV)
         return lhs.m_val.sv == rhs.m_val.sv;
 
-    const llvm::APInt* op1 = lhs.getBV(&op1static);
-    const llvm::APInt* op2 = rhs.getBV(&op2static);
+    const APInt* op1 = lhs.getBV(&op1static);
+    const APInt* op2 = rhs.getBV(&op2static);
     return op1->eq(*op2);
 }
 
@@ -834,8 +834,8 @@ yasm::operator<(const IntNum& lhs, const IntNum& rhs)
     if (lhs.m_type == IntNum::INTNUM_SV && rhs.m_type == IntNum::INTNUM_SV)
         return lhs.m_val.sv < rhs.m_val.sv;
 
-    const llvm::APInt* op1 = lhs.getBV(&op1static);
-    const llvm::APInt* op2 = rhs.getBV(&op2static);
+    const APInt* op1 = lhs.getBV(&op1static);
+    const APInt* op2 = rhs.getBV(&op2static);
     return op1->slt(*op2);
 }
 
@@ -845,15 +845,13 @@ yasm::operator>(const IntNum& lhs, const IntNum& rhs)
     if (lhs.m_type == IntNum::INTNUM_SV && rhs.m_type == IntNum::INTNUM_SV)
         return lhs.m_val.sv > rhs.m_val.sv;
 
-    const llvm::APInt* op1 = lhs.getBV(&op1static);
-    const llvm::APInt* op2 = rhs.getBV(&op2static);
+    const APInt* op1 = lhs.getBV(&op1static);
+    const APInt* op2 = rhs.getBV(&op2static);
     return op1->sgt(*op2);
 }
 
 void
-IntNum::getStr(llvm::SmallVectorImpl<char>& str,
-               int base,
-               bool lowercase) const
+IntNum::getStr(SmallVectorImpl<char>& str, int base, bool lowercase) const
 {
     if (m_type == INTNUM_BV)
     {
@@ -895,7 +893,7 @@ IntNum::getStr(llvm::SmallVectorImpl<char>& str,
 std::string
 IntNum::getStr(int base, bool lowercase) const
 {
-    llvm::SmallString<40> s;
+    SmallString<40> s;
     getStr(s, base, lowercase);
     return s.str();
 }
@@ -915,7 +913,7 @@ IntNum::Extract(unsigned int width, unsigned int lsb) const
     else
     {
         uint64_t v;
-        llvm::APInt::tcExtract(&v, 1, m_val.bv->getRawData(), width, lsb);
+        APInt::tcExtract(&v, 1, m_val.bv->getRawData(), width, lsb);
         return static_cast<unsigned long>(v);
     }
 }
@@ -924,7 +922,7 @@ IntNum::Extract(unsigned int width, unsigned int lsb) const
 pugi::xml_node
 IntNum::Write(pugi::xml_node out) const
 {
-    llvm::SmallString<40> s;
+    SmallString<40> s;
     getStr(s);
     s += '\0';
     return append_data(out, s.str().data());
@@ -932,13 +930,13 @@ IntNum::Write(pugi::xml_node out) const
 #endif // WITH_XML
 
 void
-IntNum::Print(llvm::raw_ostream& os,
+IntNum::Print(raw_ostream& os,
               int base,
               bool lowercase,
               bool showbase,
               int bits) const
 {
-    const llvm::APInt* bv = getBV(&conv_bv);
+    const APInt* bv = getBV(&conv_bv);
 
     if (bv->isNegative())
     {
@@ -950,7 +948,7 @@ IntNum::Print(llvm::raw_ostream& os,
         os << '-';
     }
 
-    llvm::SmallString<40> s;
+    SmallString<40> s;
     bv->toString(s, base, true, false, lowercase);
 
     // prefix and 0 padding, if required

@@ -53,7 +53,7 @@ Win64Object::~Win64Object()
 }
 
 void
-Win64Object::Output(llvm::raw_fd_ostream& os,
+Win64Object::Output(raw_fd_ostream& os,
                     bool all_syms,
                     DebugFormat& dbgfmt,
                     DiagnosticsEngine& diags)
@@ -85,7 +85,7 @@ Win64Object::DirProcFrame(DirectiveInfo& info, DiagnosticsEngine& diags)
             << name_nv.getValueRange();
         return;
     }
-    llvm::StringRef name = name_nv.getId();
+    StringRef name = name_nv.getId();
 
     if (m_proc_frame.isValid())
     {
@@ -400,7 +400,7 @@ Win64Object::DirEndProcFrame(DirectiveInfo& info, DiagnosticsEngine& diags)
 }
 
 void
-Win64Object::AddDirectives(Directives& dirs, llvm::StringRef parser)
+Win64Object::AddDirectives(Directives& dirs, StringRef parser)
 {
     static const Directives::Init<Win64Object> gas_dirs[] =
     {
@@ -439,7 +439,7 @@ Win64Object::AddDirectives(Directives& dirs, llvm::StringRef parser)
 }
 
 bool
-Win64Object::InitSection(llvm::StringRef name,
+Win64Object::InitSection(StringRef name,
                          Section& section,
                          CoffSection* coffsect,
                          SourceLocation source,

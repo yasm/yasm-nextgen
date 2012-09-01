@@ -47,7 +47,7 @@ Location::Write(pugi::xml_node out) const
 {
     pugi::xml_node root = out.append_child("Location");
     root.append_attribute("bc") =
-        llvm::Twine::utohexstr((uint64_t)bc).str().c_str();
+        Twine::utohexstr((uint64_t)bc).str().c_str();
     root.append_attribute("off") = off;
     return root;
 }

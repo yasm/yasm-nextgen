@@ -36,8 +36,9 @@
 
 
 using namespace yasm;
+using llvm::APInt;
 
-static llvm::APInt staticbv(IntNum::BITVECT_NATIVE_SIZE, 0);
+static APInt staticbv(IntNum::BITVECT_NATIVE_SIZE, 0);
 
 void
 yasm::Write8(Bytes& bytes, const IntNum& intn)
@@ -107,10 +108,10 @@ yasm::WriteN(Bytes& bytes, const IntNum& intn, int n)
     }
 
     // harder cases
-    const llvm::APInt* bv = intn.getBV(&staticbv);
+    const APInt* bv = intn.getBV(&staticbv);
     const uint64_t* words = bv->getRawData();
     unsigned int nwords = bv->getNumWords();
-    llvm::APInt tmp;    // must be here so it stays in scope
+    APInt tmp;    // must be here so it stays in scope
     if (bv->getBitWidth() < static_cast<unsigned int>(n*8))
     {
         tmp = *bv;

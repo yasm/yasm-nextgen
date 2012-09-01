@@ -45,10 +45,10 @@ using namespace yasm::objfmt;
 
 const char* ElfSection::key = "objfmt::elf::ElfSection";
 
-ElfSection::ElfSection(const ElfConfig&             config,
-                       const llvm::MemoryBuffer&    in,
-                       ElfSectionIndex              index,
-                       DiagnosticsEngine&           diags)
+ElfSection::ElfSection(const ElfConfig&     config,
+                       const MemoryBuffer&  in,
+                       ElfSectionIndex      index,
+                       DiagnosticsEngine&   diags)
     : m_config(config)
     , m_index(index)
     , m_rel_name_index(0)
@@ -198,7 +198,7 @@ ElfSection::Write(pugi::xml_node out) const
 #endif // WITH_XML
 
 unsigned long
-ElfSection::Write(llvm::raw_ostream& os, Bytes& scratch) const
+ElfSection::Write(raw_ostream& os, Bytes& scratch) const
 {
     scratch.resize(0);
     m_config.setEndian(scratch);
@@ -268,7 +268,7 @@ ElfSection::CreateSection(const StringTable& shstrtab) const
     {
         Bytecode& gap =
             section->AppendGap(m_size.getUInt(), SourceLocation());
-        llvm::IntrusiveRefCntPtr<DiagnosticIDs> diagids(new DiagnosticIDs);
+        IntrusiveRefCntPtr<DiagnosticIDs> diagids(new DiagnosticIDs);
         DiagnosticsEngine nodiags(diagids);
         gap.CalcLen(NoAddSpan, nodiags); // force length calculation
     }
@@ -278,7 +278,7 @@ ElfSection::CreateSection(const StringTable& shstrtab) const
 
 bool
 ElfSection::LoadSectionData(Section& sect,
-                            const llvm::MemoryBuffer& in,
+                            const MemoryBuffer& in,
                             DiagnosticsEngine& diags) const
 {
     if (sect.isBSS())
@@ -300,7 +300,7 @@ ElfSection::LoadSectionData(Section& sect,
 }
 
 unsigned long
-ElfSection::WriteRel(llvm::raw_ostream& os,
+ElfSection::WriteRel(raw_ostream& os,
                      ElfSectionIndex symtab_idx,
                      Section& sect,
                      Bytes& scratch)
@@ -349,7 +349,7 @@ ElfSection::WriteRel(llvm::raw_ostream& os,
 }
 
 unsigned long
-ElfSection::WriteRelocs(llvm::raw_ostream& os,
+ElfSection::WriteRelocs(raw_ostream& os,
                         Section& sect,
                         Bytes& scratch,
                         const ElfMachine& machine,
@@ -384,12 +384,12 @@ ElfSection::WriteRelocs(llvm::raw_ostream& os,
 }
 
 void
-ElfSection::ReadRelocs(const llvm::MemoryBuffer&    in,
-                       const ElfSection&            reloc_sect,
-                       Section&                     sect,
-                       const ElfMachine&            machine,
-                       const ElfSymtab&             symtab,
-                       bool                         rela) const
+ElfSection::ReadRelocs(const MemoryBuffer&  in,
+                       const ElfSection&    reloc_sect,
+                       Section&             sect,
+                       const ElfMachine&    machine,
+                       const ElfSymtab&     symtab,
+                       bool                 rela) const
 {
     unsigned long start = reloc_sect.getFileOffset();
     unsigned long end = start + reloc_sect.getSize().getUInt();

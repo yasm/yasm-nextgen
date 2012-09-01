@@ -58,7 +58,7 @@ yasm::append_data(pugi::xml_node node, const std::string& val)
 }
 
 pugi::xml_node
-yasm::append_data(pugi::xml_node node, llvm::StringRef val)
+yasm::append_data(pugi::xml_node node, StringRef val)
 {
     pugi::xml_node data = node.append_child(pugi::node_pcdata);
     if (val.back() == '\0')
@@ -71,7 +71,7 @@ yasm::append_data(pugi::xml_node node, llvm::StringRef val)
 pugi::xml_node
 yasm::append_data(pugi::xml_node node, int val)
 {
-    llvm::SmallString<128> ss;
+    SmallString<128> ss;
     llvm::raw_svector_ostream oss(ss);
     oss << val << '\0';
     return append_data(node, oss.str().data());
@@ -80,7 +80,7 @@ yasm::append_data(pugi::xml_node node, int val)
 pugi::xml_node
 yasm::append_data(pugi::xml_node node, unsigned int val)
 {
-    llvm::SmallString<128> ss;
+    SmallString<128> ss;
     llvm::raw_svector_ostream oss(ss);
     oss << val << '\0';
     return append_data(node, oss.str().data());
@@ -89,7 +89,7 @@ yasm::append_data(pugi::xml_node node, unsigned int val)
 pugi::xml_node
 yasm::append_data(pugi::xml_node node, long val)
 {
-    llvm::SmallString<128> ss;
+    SmallString<128> ss;
     llvm::raw_svector_ostream oss(ss);
     oss << val << '\0';
     return append_data(node, oss.str().data());
@@ -98,7 +98,7 @@ yasm::append_data(pugi::xml_node node, long val)
 pugi::xml_node
 yasm::append_data(pugi::xml_node node, unsigned long val)
 {
-    llvm::SmallString<128> ss;
+    SmallString<128> ss;
     llvm::raw_svector_ostream oss(ss);
     oss << val << '\0';
     return append_data(node, oss.str().data());
@@ -116,7 +116,7 @@ yasm::append_data(pugi::xml_node node, bool val)
 pugi::xml_node
 yasm::append_data(pugi::xml_node node, double val)
 {
-    llvm::SmallString<128> ss;
+    SmallString<128> ss;
     llvm::raw_svector_ostream oss(ss);
     oss << val << '\0';
     return append_data(node, oss.str().data());
@@ -139,7 +139,7 @@ yasm::append_child(pugi::xml_node node, const char* name, const std::string& val
 }
 
 pugi::xml_node
-yasm::append_child(pugi::xml_node node, const char* name, llvm::StringRef val)
+yasm::append_child(pugi::xml_node node, const char* name, StringRef val)
 {
     pugi::xml_node child = node.append_child(name);
     append_data(child, val);

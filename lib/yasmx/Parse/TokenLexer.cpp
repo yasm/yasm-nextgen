@@ -128,7 +128,7 @@ TokenLexer::destroy()
 /// Expand the arguments of a function-like macro so that we can quickly
 /// return preexpanded tokens from Tokens.
 void TokenLexer::ExpandFunctionArguments() {
-  llvm::SmallVector<Token, 128> ResultToks;
+  SmallVector<Token, 128> ResultToks;
 
   // Loop through 'Tokens', expanding them into ResultToks.  Keep
   // track of whether we change anything.  If not, no need to keep them.  If so,
@@ -379,7 +379,7 @@ void TokenLexer::Lex(Token* Tok) {
 /// are more ## after it, chomp them iteratively.  Return the result as Tok.
 /// If this returns true, the caller should immediately return the token.
 bool TokenLexer::PasteTokens(Token &Tok) {
-  llvm::SmallString<128> Buffer;
+  SmallString<128> Buffer;
   const char *ResultTokStrPtr = 0;
   do {
     // Consume the ## operator.

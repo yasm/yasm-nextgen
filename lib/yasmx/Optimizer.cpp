@@ -192,7 +192,7 @@ OffsetSetter::Write(pugi::xml_node out) const
 {
     pugi::xml_node root = out.append_child("OffsetSetter");
     root.append_attribute("bc") =
-        llvm::Twine::utohexstr((uint64_t)m_bc).str().c_str();
+        Twine::utohexstr((uint64_t)m_bc).str().c_str();
     root.append_attribute("curval") = m_cur_val;
     root.append_attribute("newval") = m_new_val;
     root.append_attribute("thres") = m_thres;
@@ -473,7 +473,7 @@ Span::~Span()
 std::string
 Span::getName() const
 {
-    llvm::SmallString<32> ss;
+    SmallString<32> ss;
     llvm::raw_svector_ostream oss(ss);
     oss << "SPAN{" << m_bc.getIndex() << ',' << m_id << '}';
     return oss.str();
@@ -485,14 +485,14 @@ Span::Write(pugi::xml_node out) const
 {
     pugi::xml_node root = out.append_child("Span");
     root.append_attribute("bc") =
-        llvm::Twine::utohexstr((uint64_t)(&m_bc)).str().c_str();
+        Twine::utohexstr((uint64_t)(&m_bc)).str().c_str();
     root.append_attribute("id") = m_id;
 
     if (!m_depval.hasAbs() || m_depval.isRelative())
         append_child(root, "DepVal", m_depval);
     else
     {
-        llvm::SmallString<256> ss;
+        SmallString<256> ss;
         llvm::raw_svector_ostream oss(ss);
         oss << *m_depval.getAbs() << '\0';
         append_child(root, "DepVal", oss.str().data());

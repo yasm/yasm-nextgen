@@ -50,22 +50,22 @@ GasPreproc::~GasPreproc()
 }
 
 void
-GasPreproc::PredefineMacro(llvm::StringRef macronameval)
+GasPreproc::PredefineMacro(StringRef macronameval)
 {
 }
 
 void
-GasPreproc::UndefineMacro(llvm::StringRef macroname)
+GasPreproc::UndefineMacro(StringRef macroname)
 {
 }
 
 void
-GasPreproc::DefineBuiltin(llvm::StringRef macronameval)
+GasPreproc::DefineBuiltin(StringRef macronameval)
 {
 }
 
 bool
-GasPreproc::HandleInclude(llvm::StringRef filename, SourceLocation source)
+GasPreproc::HandleInclude(StringRef filename, SourceLocation source)
 {
     if (filename.empty())
     {
@@ -113,7 +113,7 @@ GasPreproc::RegisterBuiltinMacros()
 }
 
 Lexer*
-GasPreproc::CreateLexer(FileID fid, const llvm::MemoryBuffer* input_buffer)
+GasPreproc::CreateLexer(FileID fid, const MemoryBuffer* input_buffer)
 {
     return new GasLexer(fid, input_buffer, *this);
 }

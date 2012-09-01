@@ -103,7 +103,7 @@ public:
                 DiagnosticsEngine& diags);
     bool Output(Bytecode& bc, BytecodeOutput& bc_out);
 
-    llvm::StringRef getType() const;
+    StringRef getType() const;
 
     X86General* clone() const;
 

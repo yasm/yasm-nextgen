@@ -97,16 +97,16 @@ Preprocessor::~Preprocessor()
 }
 
 void
-Preprocessor::PredefineText(llvm::MemoryBuffer* buf)
+Preprocessor::PredefineText(MemoryBuffer* buf)
 {
     m_predefines.push_back(buf);
 }
 
 void
-Preprocessor::PreInclude(llvm::StringRef filename)
+Preprocessor::PreInclude(StringRef filename)
 {
-    llvm::OwningPtr<llvm::MemoryBuffer> file;
-    if (llvm::error_code err = llvm::MemoryBuffer::getFile(filename, file))
+    OwningPtr<MemoryBuffer> file;
+    if (llvm::error_code err = MemoryBuffer::getFile(filename, file))
     {
         Diag(yasm::SourceLocation(), yasm::diag::err_cannot_open_file)
             << filename << err.message();
@@ -204,9 +204,8 @@ Preprocessor::getSpelling(const Token& tok, const char*& buffer) const
     return out_buf-buffer;
 }
 
-llvm::StringRef
-Preprocessor::getSpelling(const Token &Tok,
-                          llvm::SmallVectorImpl<char> &Buffer) const
+StringRef
+Preprocessor::getSpelling(const Token &Tok, SmallVectorImpl<char> &Buffer) const
 {
     // Try the fast path.
     if (const IdentifierInfo *II = Tok.getIdentifierInfo())
@@ -218,7 +217,7 @@ Preprocessor::getSpelling(const Token &Tok,
 
     const char *Ptr = Buffer.data();
     unsigned Len = getSpelling(Tok, Ptr);
-    return llvm::StringRef(Ptr, Len);
+    return StringRef(Ptr, Len);
 }
 
 SourceLocation
@@ -294,7 +293,7 @@ Preprocessor::EnterMainSourceFile()
         m_header_info.IncrementIncludeCount(FE);
 
     // Preprocess Predefines to populate the initial preprocessor state.
-    for (std::vector<llvm::MemoryBuffer*>::reverse_iterator
+    for (std::vector<MemoryBuffer*>::reverse_iterator
          i=m_predefines.rbegin(), end=m_predefines.rend(); i != end; ++i)
     {
         FileID FID = m_source_mgr.createFileIDForMemBuffer(*i);
@@ -317,13 +316,13 @@ Preprocessor::LookUpIdentifierInfo(Token* identifier, const char* buf_ptr) const
     if (buf_ptr && !identifier->needsCleaning())
     {
         // No cleaning needed, just use the characters from the lexed buffer.
-        ii = getIdentifierInfo(llvm::StringRef(buf_ptr, identifier->getLength()));
+        ii = getIdentifierInfo(StringRef(buf_ptr, identifier->getLength()));
     }
     else
     {
         // Cleaning needed, alloca a buffer, clean into it, then use the buffer.
-        llvm::SmallString<64> identifier_buffer;
-        llvm::StringRef cleaned_str = getSpelling(*identifier, identifier_buffer);
+        SmallString<64> identifier_buffer;
+        StringRef cleaned_str = getSpelling(*identifier, identifier_buffer);
         ii = getIdentifierInfo(cleaned_str);
     }
     identifier->setIdentifierInfo(ii);
@@ -375,7 +374,7 @@ Preprocessor::HandleIdentifier(Token* identifier)
 #endif
 
 const FileEntry*
-Preprocessor::LookupFile(llvm::StringRef filename,
+Preprocessor::LookupFile(StringRef filename,
                          bool is_angled,
                          const DirectoryLookup* from_dir,
                          const DirectoryLookup*& cur_dir)

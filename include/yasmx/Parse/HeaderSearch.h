@@ -30,6 +30,7 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //
+#include "yasmx/Basic/LLVM.h"
 #include "yasmx/Config/export.h"
 #include "yasmx/Parse/DirectoryLookup.h"
 #include "llvm/ADT/StringMap.h"
@@ -150,7 +151,7 @@ public:
   /// search location.  This is used to implement #include_next.  CurFileEnt, if
   /// non-null, indicates where the #including file is, in case a relative
   /// search is needed.
-  const FileEntry *LookupFile(llvm::StringRef Filename, bool isAngled,
+  const FileEntry *LookupFile(StringRef Filename, bool isAngled,
                               const DirectoryLookup *FromDir,
                               const DirectoryLookup *&CurDir,
                               const FileEntry *CurFileEnt);

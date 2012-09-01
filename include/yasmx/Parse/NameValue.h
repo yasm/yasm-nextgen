@@ -33,6 +33,7 @@
 #include <string>
 
 #include "llvm/ADT/StringRef.h"
+#include "yasmx/Basic/LLVM.h"
 #include "yasmx/Basic/SourceLocation.h"
 #include "yasmx/Config/export.h"
 #include "yasmx/Parse/Token.h"
@@ -54,27 +55,27 @@ public:
     /// @param name         name; may be empty string if no name
     /// @param id           identifier value
     /// @param id_prefix    identifier prefix for raw identifiers
-    NameValue(llvm::StringRef name, llvm::StringRef id, char id_prefix);
+    NameValue(StringRef name, StringRef id, char id_prefix);
 
     /// String value constructor.
     /// @param name         name; may be empty string if no name
     /// @param str          string value
-    NameValue(llvm::StringRef name, llvm::StringRef str);
+    NameValue(StringRef name, StringRef str);
 
     /// Expression value constructor.
     /// @param name         name; may be empty string if no name
     /// @param e            expression
-    NameValue(llvm::StringRef name, std::auto_ptr<Expr> e);
+    NameValue(StringRef name, std::auto_ptr<Expr> e);
 
     /// Identifier value constructor with no name.
     /// @param id           identifier value
     /// @param id_prefix    identifier prefix for raw identifiers
-    NameValue(llvm::StringRef id, char id_prefix);
+    NameValue(StringRef id, char id_prefix);
 
     /// String value constructor with no name.
     /// @param name         name; may be empty string if no name
     /// @param str          string value
-    explicit NameValue(llvm::StringRef str);
+    explicit NameValue(StringRef str);
 
     /// Expression value constructor with no name.
     /// @param e            expression
@@ -104,7 +105,7 @@ public:
 
     /// Get name.
     /// @return Name; empty string if no name.
-    llvm::StringRef getName() const { return m_name; }
+    StringRef getName() const { return m_name; }
 
     /// Determine if value is convertible to an expression using getExpr().
     /// @return True if convertible.
@@ -150,12 +151,12 @@ public:
     /// it's treated as a string.
     /// @return String; asserts if the parameter cannot be realized as a
     ///         string.
-    llvm::StringRef getString() const;
+    StringRef getString() const;
 
     /// Get value as an identifier.
     /// @return Identifier (string); asserts if the parameter is not an
     ///         identifier.
-    llvm::StringRef getId() const;
+    StringRef getId() const;
 
     const Token& getToken() const;
 

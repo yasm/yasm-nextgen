@@ -57,14 +57,14 @@ using namespace yasm;
 using namespace yasm::parser;
 
 bool
-GasParser::getLocalLabel(llvm::SmallVectorImpl<char>& name,
-                         llvm::StringRef num,
+GasParser::getLocalLabel(SmallVectorImpl<char>& name,
+                         StringRef num,
                          char suffix,
                          SourceLocation source,
                          bool inc)
 {
     // GasNumericParser needs a terminated StringRef; ensure it gets one.
-    llvm::SmallString<20> refnum;
+    SmallString<20> refnum;
     refnum += num;
     refnum.push_back('\0');
     GasNumericParser numparse(refnum.str().substr(0, num.size()),
@@ -139,7 +139,7 @@ next:
             }
 
             // possibly a directive; try to parse it
-            llvm::StringRef name = ii->getName();
+            StringRef name = ii->getName();
             if (name[0] == '.')
             {
                 SourceLocation id_source = ConsumeToken();
@@ -187,7 +187,7 @@ next:
         {
             // If it's an integer from 0-9 and followed by a colon,
             // it's a local label.
-            llvm::SmallString<20> labelname;
+            SmallString<20> labelname;
             if (NextToken().isNot(Token::colon) ||
                 !getLocalLabel(labelname, m_token.getLiteral(), ':',
                                m_token.getLocation(), true))
@@ -218,7 +218,7 @@ next:
 }
 
 void
-GasParser::setDebugFile(llvm::StringRef filename,
+GasParser::setDebugFile(StringRef filename,
                         SourceRange filename_source,
                         SourceLocation dir_source)
 {
@@ -236,7 +236,7 @@ GasParser::setDebugFile(llvm::StringRef filename,
 void
 GasParser::setDebugFile(const IntNum& fileno,
                         SourceRange fileno_source,
-                        llvm::StringRef filename,
+                        StringRef filename,
                         SourceRange filename_source,
                         SourceLocation dir_source)
 {
@@ -466,11 +466,11 @@ GasParser::ParseDirInclude(unsigned int param, SourceLocation source)
         return false;
     }
     SourceLocation filename_source = m_token.getLocation();
-    llvm::SmallString<64> strbuf;
+    SmallString<64> strbuf;
     GasStringParser str(m_token.getLiteral(), filename_source, m_preproc);
     if (str.hadError())
         return false;
-    llvm::StringRef filename = str.getString(strbuf);
+    StringRef filename = str.getString(strbuf);
     ConsumeToken();
     return m_gas_preproc.HandleInclude(filename, filename_source);
 }
@@ -501,7 +501,7 @@ GasParser::ParseDirRept(unsigned int param, SourceLocation source)
     unsigned long count = intn.getUInt();
 
     // Lex and save tokens until we get an .endr
-    llvm::SmallVector<Token, 8> tokens;
+    SmallVector<Token, 8> tokens;
     int depth = 1;
     for (;;)
     {
@@ -730,7 +730,7 @@ GasParser::ParseDirAscii(unsigned int withzero, SourceLocation source)
         }
         else if (m_token.is(GasToken::string_literal))
         {
-            llvm::SmallString<64> strbuf;
+            SmallString<64> strbuf;
             GasStringParser str(m_token.getLiteral(), m_token.getLocation(),
                                 m_preproc);
             if (!str.hadError())
@@ -761,7 +761,7 @@ GasParser::ParseDirFloat(unsigned int size, SourceLocation source)
     SourceLocation lastcomma = m_token.getLocation().getLocWithOffset(-1);
     for (;;)
     {
-        llvm::StringRef num_str;
+        StringRef num_str;
 
         SourceLocation num_source = m_token.getLocation();
         switch (m_token.getKind())
@@ -998,7 +998,7 @@ GasParser::ParseDirFloatFill(unsigned int size, SourceLocation source)
     }
     ConsumeToken();
 
-    llvm::StringRef num_str;
+    StringRef num_str;
 
     switch (m_token.getKind())
     {
@@ -1136,8 +1136,8 @@ GasParser::ParseDirSection(unsigned int param, SourceLocation source)
     // we either get a comma or a token with preceding space.
     unsigned int endtok = GasToken::comma;
     SourceLocation start, end;
-    llvm::SmallString<128> sectname_buf;
-    llvm::StringRef sectname =
+    SmallString<128> sectname_buf;
+    StringRef sectname =
         MergeTokensUntil(&endtok, 1, &start, &end, sectname_buf);
 
     NameValues& nvs = info.getNameValues();
@@ -1228,7 +1228,7 @@ GasParser::ParseDirEqu(unsigned int param, SourceLocation source)
 bool
 GasParser::ParseDirFile(unsigned int param, SourceLocation source)
 {
-    llvm::SmallString<64> filename_buf;
+    SmallString<64> filename_buf;
 
     if (m_token.is(GasToken::string_literal))
     {
@@ -1497,7 +1497,7 @@ GasParser::ParseDirIfeqs(unsigned int negate, SourceLocation source)
         Diag(m_token, diag::err_expected_string);
         return false;
     }
-    llvm::SmallString<64> s1_buf;
+    SmallString<64> s1_buf;
     GasStringParser s1(m_token.getLiteral(), m_token.getLocation(), m_preproc);
     if (s1.hadError())
         return false;
@@ -1512,7 +1512,7 @@ GasParser::ParseDirIfeqs(unsigned int negate, SourceLocation source)
         Diag(m_token, diag::err_expected_string);
         return false;
     }
-    llvm::SmallString<64> s2_buf;
+    SmallString<64> s2_buf;
     GasStringParser s2(m_token.getLiteral(), m_token.getLocation(), m_preproc);
     if (s2.hadError())
         return false;
@@ -1546,7 +1546,7 @@ GasParser::ParseDirSyntax(unsigned int intel, SourceLocation source)
         }
         IdentifierInfo* ii = m_token.getIdentifierInfo();
         SourceLocation id_source = ConsumeToken();
-        llvm::StringRef name = ii->getName();
+        StringRef name = ii->getName();
         if (name.equals_lower("prefix"))
             reg_prefix = true;
         else if (name.equals_lower("noprefix"))
@@ -1677,7 +1677,7 @@ GasParser::ParseDirective(NameValues* nvs, const ParseExprTerm* parse_term)
             }
             case GasToken::string_literal:
             {
-                llvm::SmallString<64> strbuf;
+                SmallString<64> strbuf;
                 GasStringParser str(m_token.getLiteral(), m_token.getLocation(),
                                     m_preproc);
                 SourceRange str_source = m_token.getSourceRange();
@@ -2487,8 +2487,8 @@ GasParser::ParseExpr3(Expr& e, const ParseExprTerm* parse_term)
         case GasToken::numeric_constant:
         {
             // handle forward/backward local label reference
-            llvm::StringRef literal = m_token.getLiteral();
-            llvm::SmallString<20> llname;
+            StringRef literal = m_token.getLiteral();
+            SmallString<20> llname;
             bool ishex = (literal.size() > 2 && literal[0] == '0' &&
                           (literal[1] == 'x' || literal[1] == 'X'));
             if (!ishex && (literal.back() == 'b' || literal.back() == 'f') &&
@@ -2632,7 +2632,7 @@ GasParser::ParseRegister()
 }
 
 void
-GasParser::DefineLabel(llvm::StringRef name, SourceLocation source)
+GasParser::DefineLabel(StringRef name, SourceLocation source)
 {
     SymbolRef sym = m_object->getSymbol(name);
     sym->CheckedDefineLabel(m_container->getEndLoc(), source,
@@ -2672,7 +2672,7 @@ GasParser::DefineLcomm(SymbolRef sym,
 }
 
 void
-GasParser::SwitchSection(llvm::StringRef name, bool builtin, SourceRange source)
+GasParser::SwitchSection(StringRef name, bool builtin, SourceRange source)
 {
     DirectiveInfo info(*m_object, m_container->getEndLoc(), source.getBegin());
     NameValues& nvs = info.getNameValues();
@@ -2687,7 +2687,7 @@ GasParser::SwitchSection(llvm::StringRef name, bool builtin, SourceRange source)
 }
 
 Section&
-GasParser::getSection(llvm::StringRef name, bool builtin, SourceRange source)
+GasParser::getSection(StringRef name, bool builtin, SourceRange source)
 {
     Section* cur_section = m_object->getCurSection();
     SwitchSection(name, builtin, source);

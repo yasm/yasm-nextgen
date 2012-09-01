@@ -49,7 +49,7 @@ using namespace yasm;
 using namespace yasm::parser;
 
 GasLexer::GasLexer(FileID fid,
-                   const llvm::MemoryBuffer* input_buffer,
+                   const MemoryBuffer* input_buffer,
                    Preprocessor& pp)
     : Lexer(fid, input_buffer, pp)
 {

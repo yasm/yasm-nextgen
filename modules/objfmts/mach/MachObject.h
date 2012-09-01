@@ -52,11 +52,11 @@ public:
     /// Destructor.
     ~MachObject();
 
-    void AddDirectives(Directives& dirs, llvm::StringRef parser);
+    void AddDirectives(Directives& dirs, StringRef parser);
 
-    void InitSymbols(llvm::StringRef parser);
+    void InitSymbols(StringRef parser);
 
-    void Output(llvm::raw_fd_ostream& os,
+    void Output(raw_fd_ostream& os,
                 bool all_syms,
                 DebugFormat& dbgfmt,
                 DiagnosticsEngine& diags);
@@ -65,30 +65,30 @@ public:
     Section* AppendSection(const SectionConfig& config,
                            SourceLocation source,
                            DiagnosticsEngine& diags);
-    Section* AppendSection(llvm::StringRef name,
+    Section* AppendSection(StringRef name,
                            SourceLocation source,
                            DiagnosticsEngine& diags);
-    Section* AppendSection(llvm::StringRef segname,
-                           llvm::StringRef sectname,
+    Section* AppendSection(StringRef segname,
+                           StringRef sectname,
                            SourceLocation source,
                            DiagnosticsEngine& diags);
 
-    static llvm::StringRef getName() { return "Mac OS X ABI Mach-O"; }
-    static llvm::StringRef getKeyword() { return "macho"; }
-    static llvm::StringRef getExtension() { return ".o"; }
+    static StringRef getName() { return "Mac OS X ABI Mach-O"; }
+    static StringRef getKeyword() { return "macho"; }
+    static StringRef getExtension() { return ".o"; }
     static unsigned int getDefaultX86ModeBits() { return 0; }
-    static llvm::StringRef getDefaultDebugFormatKeyword() { return "cfi"; }
-    static std::vector<llvm::StringRef> getDebugFormatKeywords();
+    static StringRef getDefaultDebugFormatKeyword() { return "cfi"; }
+    static std::vector<StringRef> getDebugFormatKeywords();
     static bool isOkObject(Object& object) { return true; }
-    static bool Taste(const llvm::MemoryBuffer& in,
+    static bool Taste(const MemoryBuffer& in,
                       /*@out@*/ std::string* arch_keyword,
                       /*@out@*/ std::string* machine)
     { return false; }
 
 private:
     void InitSection(const SectionConfig& config, Section& section);
-    SectionConfig LookupSection(llvm::StringRef name);
-    SectionConfig LookupSection(llvm::StringRef segname, llvm::StringRef sectname);
+    SectionConfig LookupSection(StringRef name);
+    SectionConfig LookupSection(StringRef segname, StringRef sectname);
     void DirGasSection(DirectiveInfo& info, DiagnosticsEngine& diags);
     void DirSection(DirectiveInfo& info, DiagnosticsEngine& diags);
     void DirGasStandardSection(const StaticSectionConfig* config,
@@ -120,18 +120,18 @@ public:
     {}
     ~Mach32Object();
 
-    static llvm::StringRef getName() { return "Mac OS X ABI Mach-O (32-bit)"; }
-    static llvm::StringRef getKeyword() { return "macho32"; }
-    static llvm::StringRef getExtension() { return MachObject::getExtension(); }
+    static StringRef getName() { return "Mac OS X ABI Mach-O (32-bit)"; }
+    static StringRef getKeyword() { return "macho32"; }
+    static StringRef getExtension() { return MachObject::getExtension(); }
     static unsigned int getDefaultX86ModeBits() { return 32; }
 
-    static llvm::StringRef getDefaultDebugFormatKeyword()
+    static StringRef getDefaultDebugFormatKeyword()
     { return MachObject::getDefaultDebugFormatKeyword(); }
-    static std::vector<llvm::StringRef> getDebugFormatKeywords()
+    static std::vector<StringRef> getDebugFormatKeywords()
     { return MachObject::getDebugFormatKeywords(); }
 
     static bool isOkObject(Object& object);
-    static bool Taste(const llvm::MemoryBuffer& in,
+    static bool Taste(const MemoryBuffer& in,
                       /*@out@*/ std::string* arch_keyword,
                       /*@out@*/ std::string* machine)
     { return false; }
@@ -145,18 +145,18 @@ public:
     {}
     ~Mach64Object();
 
-    static llvm::StringRef getName() { return "Mac OS X ABI Mach-O (64-bit)"; }
-    static llvm::StringRef getKeyword() { return "macho64"; }
-    static llvm::StringRef getExtension() { return MachObject::getExtension(); }
+    static StringRef getName() { return "Mac OS X ABI Mach-O (64-bit)"; }
+    static StringRef getKeyword() { return "macho64"; }
+    static StringRef getExtension() { return MachObject::getExtension(); }
     static unsigned int getDefaultX86ModeBits() { return 64; }
 
-    static llvm::StringRef getDefaultDebugFormatKeyword()
+    static StringRef getDefaultDebugFormatKeyword()
     { return MachObject::getDefaultDebugFormatKeyword(); }
-    static std::vector<llvm::StringRef> getDebugFormatKeywords()
+    static std::vector<StringRef> getDebugFormatKeywords()
     { return MachObject::getDebugFormatKeywords(); }
 
     static bool isOkObject(Object& object);
-    static bool Taste(const llvm::MemoryBuffer& in,
+    static bool Taste(const MemoryBuffer& in,
                       /*@out@*/ std::string* arch_keyword,
                       /*@out@*/ std::string* machine)
     { return false; }

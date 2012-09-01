@@ -35,6 +35,7 @@
 
 #include "llvm/ADT/StringMap.h"
 #include "llvm/Support/PointerLikeTypeTraits.h"
+#include "yasmx/Basic/LLVM.h"
 #include "yasmx/Config/export.h"
 #include "yasmx/Parse/Token.h"
 #include "yasmx/Arch.h"
@@ -108,9 +109,9 @@ public:
     }
 
     /// getName - Return the actual identifier string.
-    llvm::StringRef getName() const
+    StringRef getName() const
     {
-        return llvm::StringRef(getNameStart(), getLength());
+        return StringRef(getNameStart(), getLength());
     }
 
     /// If this is a source-language keyword, this API
@@ -225,7 +226,7 @@ public:
     }
   
     /// Return the identifier token info for the specified named identifier.
-    IdentifierInfo& get(llvm::StringRef name)
+    IdentifierInfo& get(StringRef name)
     {
         llvm::StringMapEntry<IdentifierInfo*>& entry =
             m_hash_table.GetOrCreateValue(name);

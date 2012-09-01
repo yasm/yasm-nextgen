@@ -58,7 +58,7 @@ fromxdigit(char ch)
 /// Supported escape characters in escaped strings: '"`\?abtnvfre
 /// Octal, hex, and Unicode escapes are also supported
 ///
-NasmStringParser::NasmStringParser(llvm::StringRef str,
+NasmStringParser::NasmStringParser(StringRef str,
                                    SourceLocation loc,
                                    Preprocessor& pp)
     : m_chars_begin(str.begin()+1)
@@ -146,8 +146,8 @@ NasmStringParser::NasmStringParser(llvm::StringRef str,
 void
 NasmStringParser::getIntegerValue(IntNum* val)
 {
-    llvm::SmallString<64> strbuf;
-    llvm::StringRef str = getString(strbuf);
+    SmallString<64> strbuf;
+    StringRef str = getString(strbuf);
 
     // Little endian order, so start from the end and work our way backwards.
     val->Zero();
@@ -164,15 +164,15 @@ NasmStringParser::getString() const
     if (!m_needs_unescape)
         return std::string(m_chars_begin, m_chars_end-m_chars_begin);
 
-    llvm::SmallString<64> strbuf;
+    SmallString<64> strbuf;
     return getString(strbuf);
 }
 
-llvm::StringRef
-NasmStringParser::getString(llvm::SmallVectorImpl<char>& buffer) const
+StringRef
+NasmStringParser::getString(SmallVectorImpl<char>& buffer) const
 {
     if (!m_needs_unescape)
-        return llvm::StringRef(m_chars_begin, m_chars_end-m_chars_begin);
+        return StringRef(m_chars_begin, m_chars_end-m_chars_begin);
 
     // slow path to do unescaping
     buffer.clear();
@@ -279,5 +279,5 @@ NasmStringParser::getString(llvm::SmallVectorImpl<char>& buffer) const
         }
     }
 
-    return llvm::StringRef(buffer.begin(), buffer.size());
+    return StringRef(buffer.begin(), buffer.size());
 }

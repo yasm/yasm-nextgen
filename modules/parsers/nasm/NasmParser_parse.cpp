@@ -408,7 +408,7 @@ NasmParser::ParseLine()
                 return false;
             }
 
-            llvm::SmallString<16> dirname_buf;
+            SmallString<16> dirname_buf;
             if (!m_preproc.getSpelling(m_token, dirname_buf)
                 .equals_lower("line"))
             {
@@ -464,8 +464,8 @@ NasmParser::ParseLine()
             // filename
             unsigned int toks[1] = {NasmToken::eol};
             SourceLocation start, end;
-            llvm::SmallString<128> filename_buf;
-            llvm::StringRef filename =
+            SmallString<128> filename_buf;
+            StringRef filename =
                 MergeTokensUntil(toks, 1, &start, &end, filename_buf);
 
             // %line indicates the line number of the *next* line, so subtract
@@ -485,9 +485,8 @@ NasmParser::ParseLine()
                 Diag(m_token, diag::err_expected_directive_name);
                 return false;
             }
-            llvm::SmallString<64> dirname_buf;
-            llvm::StringRef dirname =
-                m_preproc.getSpelling(m_token, dirname_buf);
+            SmallString<64> dirname_buf;
+            StringRef dirname = m_preproc.getSpelling(m_token, dirname_buf);
             SourceLocation dirloc = ConsumeToken();
 
             // catch [directive<eol> early (XXX: better way to do this?)
@@ -510,8 +509,8 @@ NasmParser::ParseLine()
             {
                 unsigned int toks[2] = {NasmToken::comma, NasmToken::r_square};
                 SourceLocation start, end;
-                llvm::SmallString<128> sectname_buf;
-                llvm::StringRef sectname =
+                SmallString<128> sectname_buf;
+                StringRef sectname =
                     MergeTokensUntil(toks, 2, &start, &end, sectname_buf);
 
                 NameValues& nvs = info.getNameValues();
@@ -645,7 +644,7 @@ NasmParser::ParseDirective(/*@out@*/ NameValues& nvs)
                     nv.reset(new NameValue(name, ""));
                 else
                 {
-                    llvm::SmallString<64> strbuf;
+                    SmallString<64> strbuf;
                     nv.reset(new NameValue(name, str.getString(strbuf)));
                 }
                 nv->setValueRange(m_token.getSourceRange());
@@ -769,7 +768,7 @@ NasmParser::ParseExp()
                                              m_token.getLocation(), m_preproc);
                         if (!str.hadError())
                         {
-                            llvm::SmallString<64> strbuf;
+                            SmallString<64> strbuf;
                             AppendData(*m_container, str.getString(strbuf),
                                        pseudo->size, false);
                         }
@@ -857,8 +856,8 @@ dv_done:
 
             NasmStringParser str(m_token.getLiteral(), m_token.getLocation(),
                                  m_preproc);
-            llvm::SmallString<64> strbuf;
-            llvm::StringRef filename;
+            SmallString<64> strbuf;
+            StringRef filename;
             if (!str.hadError())
                 filename = str.getString(strbuf);
             ConsumeToken();
@@ -1789,7 +1788,7 @@ NasmParser::DirAlign(DirectiveInfo& info, DiagnosticsEngine& diags)
 }
 
 void
-NasmParser::DoDirective(llvm::StringRef name, DirectiveInfo& info)
+NasmParser::DoDirective(StringRef name, DirectiveInfo& info)
 {
     ++num_directive;
     Directive handler;

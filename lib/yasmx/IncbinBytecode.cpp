@@ -44,7 +44,7 @@ namespace {
 class IncbinBytecode : public Bytecode::Contents
 {
 public:
-    IncbinBytecode(llvm::StringRef filename,
+    IncbinBytecode(StringRef filename,
                    std::auto_ptr<Expr> start,
                    std::auto_ptr<Expr> maxlen);
     ~IncbinBytecode();
@@ -61,7 +61,7 @@ public:
     /// Convert a bytecode into its byte representation.
     bool Output(Bytecode& bc, BytecodeOutput& bc_out);
 
-    llvm::StringRef getType() const;
+    StringRef getType() const;
 
     IncbinBytecode* clone() const;
 
@@ -73,7 +73,7 @@ public:
 private:
     std::string m_filename;     ///< file to include data from
 
-    llvm::OwningPtr<llvm::MemoryBuffer> m_buf;  ///< Buffer for file data
+    OwningPtr<MemoryBuffer> m_buf;  ///< Buffer for file data
 
     /// starting offset to read from (NULL=0)
     /*@null@*/ util::scoped_ptr<Expr> m_start;
@@ -83,7 +83,7 @@ private:
 };
 } // anonymous namespace
 
-IncbinBytecode::IncbinBytecode(llvm::StringRef filename,
+IncbinBytecode::IncbinBytecode(StringRef filename,
                                std::auto_ptr<Expr> start,
                                std::auto_ptr<Expr> maxlen)
     : m_filename(filename),
@@ -99,7 +99,7 @@ IncbinBytecode::~IncbinBytecode()
 bool
 IncbinBytecode::Finalize(Bytecode& bc, DiagnosticsEngine& diags)
 {
-    if (llvm::error_code err = llvm::MemoryBuffer::getFile(m_filename, m_buf))
+    if (llvm::error_code err = MemoryBuffer::getFile(m_filename, m_buf))
     {
         diags.Report(bc.getSource(), diag::err_file_read) << m_filename
             << err.message();
@@ -206,7 +206,7 @@ IncbinBytecode::Output(Bytecode& bc, BytecodeOutput& bc_out)
     return true;
 }
 
-llvm::StringRef
+StringRef
 IncbinBytecode::getType() const
 {
     return "yasm::IncbinBytecode";
@@ -236,7 +236,7 @@ IncbinBytecode::Write(pugi::xml_node out) const
 
 void
 yasm::AppendIncbin(BytecodeContainer& container,
-                   llvm::StringRef filename,
+                   StringRef filename,
                    /*@null@*/ std::auto_ptr<Expr> start,
                    /*@null@*/ std::auto_ptr<Expr> maxlen,
                    SourceLocation source)
