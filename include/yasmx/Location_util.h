@@ -29,6 +29,7 @@
 /// POSSIBILITY OF SUCH DAMAGE.
 /// @endlicense
 ///
+#include "yasmx/Basic/LLVM.h"
 #include "yasmx/Config/export.h"
 #include "yasmx/Config/functional.h"
 
@@ -80,7 +81,6 @@ int SubstDist(Expr& e, DiagnosticsEngine& diags,
 ///                     Substitutions must be integer or float terms.
 ///                     If null, any substitution in the expr will result in
 ///                     evaluation failure and a false return
-/// @param nsubst       size of substitution terms array
 /// @param valueloc     replace symbols and locations with their values
 /// @param zeroreg      replace registers with zero?
 /// @return True if successful.
@@ -88,20 +88,16 @@ YASM_LIB_EXPORT
 bool Evaluate(const Expr& e,
               DiagnosticsEngine& diags,
               ExprTerm* result,
-              const ExprTerm* subst,
-              unsigned int nsubst,
+              ArrayRef<ExprTerm> subst,
               bool valueloc=true,
               bool zeroreg=false);
 
-inline bool
-Evaluate(const Expr& e,
-         DiagnosticsEngine& diags,
-         ExprTerm* result,
-         bool valueloc=true,
-         bool zeroreg=false)
-{
-    return Evaluate(e, diags, result, 0, 0, valueloc, zeroreg);
-}
+YASM_LIB_EXPORT
+bool Evaluate(const Expr& e,
+              DiagnosticsEngine& diags,
+              ExprTerm* result,
+              bool valueloc=true,
+              bool zeroreg=false);
 
 } // namespace yasm
 

@@ -27,6 +27,7 @@
 #include "yasmx/Location_util.h"
 
 #include "llvm/ADT/APFloat.h"
+#include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/SmallVector.h"
 #include "yasmx/Bytecode.h"
 #include "yasmx/Expr.h"
@@ -261,8 +262,7 @@ bool
 yasm::Evaluate(const Expr& e,
                DiagnosticsEngine& diags,
                ExprTerm* result,
-               const ExprTerm* subst,
-               unsigned int nsubst,
+               ArrayRef<ExprTerm> subst,
                bool valueloc,
                bool zeroreg)
 {
@@ -362,7 +362,7 @@ yasm::Evaluate(const Expr& e,
                 case ExprTerm::SUBST:
                 {
                     unsigned int substindex = *term.getSubst();
-                    if (!subst || substindex >= nsubst)
+                    if (substindex >= subst.size())
                         return false;
                     assert((subst[substindex].getType() == ExprTerm::INT ||
                             subst[substindex].getType() == ExprTerm::FLOAT) &&
@@ -402,4 +402,14 @@ yasm::Evaluate(const Expr& e,
     assert(stack.size() == 1 && "did not fully evaluate expression");
     result->swap(stack.back());
     return true;
+}
+
+bool
+yasm::Evaluate(const Expr& e,
+               DiagnosticsEngine& diags,
+               ExprTerm* result,
+               bool valueloc,
+               bool zeroreg)
+{
+    return Evaluate(e, diags, result, ArrayRef<ExprTerm>(), valueloc, zeroreg);
 }

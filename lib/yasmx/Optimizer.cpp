@@ -34,6 +34,7 @@
 #include <memory>
 #include <vector>
 
+#include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/Statistic.h"
@@ -445,8 +446,8 @@ Span::RecalcNormal(DiagnosticsEngine& diags)
         for (Terms::iterator i=m_span_terms.begin(), end=m_span_terms.end();
              i != end; ++i)
             *m_expr_terms[i->m_subst].getIntNum() = i->m_new_val;
-        if (!Evaluate(*m_depval.getAbs(), diags, &result, &m_expr_terms[0],
-                      m_expr_terms.size(), false, false)
+        if (!Evaluate(*m_depval.getAbs(), diags, &result, m_expr_terms, false,
+                      false)
             || !result.isType(ExprTerm::INT))
             m_new_val = LONG_MAX;   // too complex; force to longest form
         else
