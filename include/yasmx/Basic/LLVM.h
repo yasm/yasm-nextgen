@@ -25,6 +25,7 @@ namespace llvm {
   class StringRef;
   class Twine;
   template<typename T> class ArrayRef;
+  template<typename T> class MutableArrayRef;
   template<class T> class OwningPtr;
   template<unsigned InternalLen> class SmallString;
   template<typename T, unsigned N> class SmallVector;
@@ -59,6 +60,7 @@ namespace yasm {
   using llvm::StringRef;
   using llvm::Twine;
   using llvm::ArrayRef;
+  using llvm::MutableArrayRef;
   using llvm::OwningPtr;
   using llvm::SmallString;
   using llvm::SmallVector;
