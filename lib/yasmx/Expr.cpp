@@ -368,17 +368,21 @@ Expr::Cleanup()
     m_terms.erase(erasefrom, m_terms.end());
 }
 
-void
-Expr::ReduceDepth(int pos, int delta)
+/// Reduce depth of a subexpression.
+/// @param terms    expression terms
+/// @param pos      term index of subexpression operator
+/// @param delta    delta to reduce depth by
+static void
+ReduceDepth(ExprTerms& terms, int pos, int delta=1)
 {
     if (pos < 0)
-        pos += m_terms.size();
-    ExprTerm& parent = m_terms[pos];
+        pos += terms.size();
+    ExprTerm& parent = terms[pos];
     if (parent.isOp())
     {
         for (int n=pos-1; n >= 0; --n)
         {
-            ExprTerm& child = m_terms[n];
+            ExprTerm& child = terms[n];
             if (child.isEmpty())
                 continue;
             if (child.m_depth <= parent.m_depth)
@@ -415,7 +419,7 @@ Expr::MakeIdent(Diagnostic& diags, int pos)
     if (!unary)
     {
         // delete one-term non-unary operators
-        ReduceDepth(pos);       // bring up child
+        ReduceDepth(m_terms, pos);      // bring up child
         root.Clear();
     }
     else if (op < Op::NONNUM)
@@ -444,19 +448,23 @@ Expr::MakeIdent(Diagnostic& diags, int pos)
     Cleanup();
 }
 
-void
-Expr::ClearExcept(int pos, int keep)
+/// Clear all terms of a subexpression, possibly keeping a single term.
+/// @param terms    expression terms
+/// @param pos      term index of subexpression operator
+/// @param keep     term index of term to keep; -1 to clear all terms
+static void
+ClearExcept(ExprTerms& terms, int pos, int keep=-1)
 {
     if (keep > 0)
-        assert(!m_terms[keep].isOp());      // unsupported
+        assert(!terms[keep].isOp());      // unsupported
     if (pos < 0)
-        pos += m_terms.size();
-    assert(pos >= 0 && pos < static_cast<int>(m_terms.size()));
+        pos += terms.size();
+    assert(pos >= 0 && pos < static_cast<int>(terms.size()));
 
-    ExprTerm& parent = m_terms[pos];
+    ExprTerm& parent = terms[pos];
     for (int n=pos-1; n >= 0; --n)
     {
-        ExprTerm& child = m_terms[n];
+        ExprTerm& child = terms[n];
         if (child.isEmpty())
             continue;
         if (child.m_depth <= parent.m_depth)
@@ -688,7 +696,7 @@ again:
                 // This is special; it deletes all terms except for
                 // the integer.  This means we can terminate
                 // immediately after deleting all other terms.
-                ClearExcept(pos, n);
+                ClearExcept(m_terms, pos, n);
                 --child.m_depth;            // bring up intnum
                 root.Clear();               // delete operator
                 return;
@@ -743,8 +751,8 @@ again:
         else if (do_level && child.isOp(op))
         {
             root.AddNumChild(child.getNumChild() - 1);
-            ReduceDepth(n);         // bring up children
-            child.Clear();          // delete levelled op
+            ReduceDepth(m_terms, n);    // bring up children
+            child.Clear();              // delete levelled op
         }
     }
 
@@ -770,7 +778,7 @@ again:
         else if (!unary)
         {
             // delete one-term non-unary operators
-            ReduceDepth(pos);       // bring up children
+            ReduceDepth(m_terms, pos);  // bring up children
             root.Clear();
         }
     }
@@ -838,51 +846,61 @@ Expr::Substitute(const ExprTerm* subst_begin, const ExprTerm* subst_end)
     return true;
 }
 
-Expr
-Expr::ExtractLHS(ExprTerms::reverse_iterator op)
+/// LHS expression extractor.
+/// @param e        expression
+/// @param pos      position of operator term to be extracted from
+static Expr
+ExtractLHS(Expr& e, int pos)
 {
-    Expr retval;
+    ExprTerms& terms = e.getTerms();
+    if (pos < 0)
+        pos += terms.size();
+    assert(pos >= 0 && pos < static_cast<int>(terms.size()));
 
-    ExprTerms::reverse_iterator end = m_terms.rend();
-    if (op == end)
+    Expr retval;
+    if (pos == 0)
         return retval;
 
+    ExprTerms& rvterms = retval.getTerms();
+
     // Delete the operator
-    int parent_depth = op->m_depth;
-    op->Clear();
+    int parent_depth = terms[pos].m_depth;
+    terms[pos].Clear();
 
     // Bring up the RHS terms
-    ExprTerms::reverse_iterator child = ++op;
-    for (; child != end; ++child)
+    int n = --pos;
+    for (; n >= 0; --n)
     {
-        if (child->isEmpty())
+        ExprTerm& child = terms[n];
+        if (child.isEmpty())
             continue;
-        if (child->m_depth <= parent_depth)
+        if (child.m_depth <= parent_depth)
             break;
-        if (child != op && child->m_depth == parent_depth+1)
+        if (n != pos && child.m_depth == parent_depth+1)
             break;      // stop when we've reached the second (LHS) child
-        child->m_depth--;
+        child.m_depth--;
     }
 
     // Extract the LHS terms.
-    for (; child != end; ++child)
+    for (; n >= 0; --n)
     {
-        if (child->isEmpty())
+        ExprTerm& child = terms[n];
+        if (child.isEmpty())
             continue;
-        if (child->m_depth <= parent_depth)
+        if (child.m_depth <= parent_depth)
             break;
         // Fix up depth for new expression.
-        child->m_depth -= parent_depth+1;
+        child.m_depth -= parent_depth+1;
         // Add a NONE term to retval, then swap it with the child.
-        retval.m_terms.push_back(ExprTerm());
-        std::swap(retval.m_terms.back(), *child);
+        rvterms.push_back(ExprTerm());
+        std::swap(rvterms.back(), child);
     }
 
     // We added in reverse order, so fix up.
-    std::reverse(retval.m_terms.begin(), retval.m_terms.end());
+    std::reverse(rvterms.begin(), rvterms.end());
 
     // Clean up NONE terms.
-    Cleanup();
+    e.Cleanup();
 
     return retval;
 }
@@ -891,11 +909,10 @@ Expr
 Expr::ExtractDeepSegOff()
 {
     // Look through terms for the first SEG:OFF operator
-    for (ExprTerms::reverse_iterator i = m_terms.rbegin(), end = m_terms.rend();
-         i != end; ++i)
+    for (int i = m_terms.size()-1; i >= 0; --i)
     {
-        if (i->isOp(Op::SEGOFF))
-            return ExtractLHS(i);
+        if (m_terms[i].isOp(Op::SEGOFF))
+            return ExtractLHS(*this, i);
     }
 
     return Expr();
@@ -908,7 +925,7 @@ Expr::ExtractSegOff()
     if (!m_terms.back().isOp(Op::SEGOFF))
         return Expr();
 
-    return ExtractLHS(m_terms.rbegin());
+    return ExtractLHS(*this, -1);
 }
 
 Expr
@@ -918,7 +935,7 @@ Expr::ExtractWRT()
     if (!m_terms.back().isOp(Op::WRT))
         return Expr();
 
-    Expr lhs = ExtractLHS(m_terms.rbegin());
+    Expr lhs = ExtractLHS(*this, -1);
 
     // need to keep LHS, and return RHS, so swap before returning.
     swap(lhs);

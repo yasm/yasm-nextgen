@@ -616,25 +616,10 @@ private:
     /// Terms of the expression.  The entire tree is stored here.
     ExprTerms m_terms;
 
-    /// Reduce depth of a subexpression.
-    /// @param pos      term index of subexpression operator
-    /// @param delta    delta to reduce depth by
-    void ReduceDepth(int pos, int delta=1);
-
-    /// Clear all terms of a subexpression, possibly keeping a single term.
-    /// @param pos      term index of subexpression operator
-    /// @param keep     term index of term to keep; -1 to clear all terms
-    void ClearExcept(int pos, int keep=-1);
-
     /// Transform all Op::SUB and Op::NEG subexpressions into appropriate *-1
     /// variants.  This assists with operator leveling as it transforms the
     /// nonlevelable Op::SUB into the levelable Op::ADD.
     void TransformNeg();
-
-    /// LHS expression extractor.
-    /// @param op   reverse iterator pointing at operator term to be extracted
-    ///             from
-    Expr ExtractLHS(ExprTerms::reverse_iterator op);
 };
 
 /// Assign to expression.
