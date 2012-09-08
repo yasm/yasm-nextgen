@@ -197,7 +197,8 @@ private:
     /*@null@*/ Bytecode* m_bc;
 
     GasDirLookup m_sized_gas_dirs[1];
-    typedef llvm::StringMap<const GasDirLookup*> GasDirMap;
+    typedef llvm::StringMap<const GasDirLookup*, llvm::BumpPtrAllocator,
+                            false> GasDirMap;
     GasDirMap m_gas_dirs;
 
     // last "base" label for local (.) labels

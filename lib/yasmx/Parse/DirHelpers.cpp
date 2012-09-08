@@ -44,7 +44,7 @@ namespace yasm
 class DirHelpers::Impl
 {
 public:
-    typedef llvm::StringMap<DirHelper> HelperMap;
+    typedef llvm::StringMap<DirHelper, llvm::BumpPtrAllocator, false> HelperMap;
     HelperMap m_value_helpers, m_novalue_helpers;
 };
 
@@ -63,9 +63,11 @@ void
 DirHelpers::Add(StringRef name, bool needsvalue, DirHelper helper)
 {
     if (needsvalue)
-        m_impl->m_value_helpers[name.lower()] = helper;
+        m_impl->m_value_helpers.GetOrCreateValue(name, helper)
+            .setCaseInsensitive();
     else
-        m_impl->m_novalue_helpers[name.lower()] = helper;
+        m_impl->m_novalue_helpers.GetOrCreateValue(name, helper)
+            .setCaseInsensitive();
 }
 
 bool
@@ -88,7 +90,7 @@ DirHelpers::operator()
         if (nv->getName().empty() && nv->isId())
         {
             Impl::HelperMap::iterator helper =
-                m_impl->m_novalue_helpers.find(nv->getId().lower());
+                m_impl->m_novalue_helpers.find(nv->getId());
             if (helper != m_impl->m_novalue_helpers.end())
             {
                 helper->second(*nv, diags);
@@ -99,7 +101,7 @@ DirHelpers::operator()
         else if (!nv->getName().empty())
         {
             Impl::HelperMap::iterator helper =
-                m_impl->m_value_helpers.find(nv->getName().lower());
+                m_impl->m_value_helpers.find(nv->getName());
             if (helper != m_impl->m_value_helpers.end())
             {
                 helper->second(*nv, diags);

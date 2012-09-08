@@ -133,6 +133,17 @@ static inline unsigned HashString(StringRef Str, unsigned Result = 0) {
   return Result;
 }
 
+/// HashStringCI - Case-insensitive hash function for strings
+static inline unsigned HashStringCI(StringRef Str, unsigned Result = 0) {
+  for (unsigned i = 0, e = Str.size(); i != e; ++i)
+  {
+    // convert to lower-case letter if it's an upper-case letter
+    char c = (Str[i] >= 'A' && Str[i] <= 'Z') ? Str[i]-('A'-'a') : Str[i];
+    Result = Result * 33 + c;
+  }
+  return Result;
+}
+
 } // End llvm namespace
 
 #endif

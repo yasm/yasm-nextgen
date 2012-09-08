@@ -61,11 +61,13 @@ IdentifierInfo::DoInsnLookup(const Arch& arch,
             ++num_insn_lookup_insn;
             m_info = const_cast<Arch::InsnInfo*>(ip.getInsn());
             m_flags |= IS_INSN;
+            setCaseInsensitive();
             break;
         case Arch::InsnPrefix::PREFIX:
             ++num_insn_lookup_prefix;
             m_info = const_cast<Prefix*>(ip.getPrefix());
             m_flags |= IS_PREFIX;
+            setCaseInsensitive();
             break;
         default:
             ++num_insn_lookup_none;
@@ -90,21 +92,25 @@ IdentifierInfo::DoRegLookup(const Arch& arch,
             ++num_reg_lookup_reg;
             m_info = const_cast<Register*>(regtmod.getReg());
             m_flags |= IS_REGISTER;
+            setCaseInsensitive();
             break;
         case Arch::RegTmod::REGGROUP:
             ++num_reg_lookup_reggroup;
             m_info = const_cast<RegisterGroup*>(regtmod.getRegGroup());
             m_flags |= IS_REGGROUP;
+            setCaseInsensitive();
             break;
         case Arch::RegTmod::SEGREG:
             ++num_reg_lookup_segreg;
             m_info = const_cast<SegmentRegister*>(regtmod.getSegReg());
             m_flags |= IS_SEGREG;
+            setCaseInsensitive();
             break;
         case Arch::RegTmod::TARGETMOD:
             ++num_reg_lookup_targetmod;
             m_info = const_cast<TargetModifier*>(regtmod.getTargetMod());
             m_flags |= IS_TARGETMOD;
+            setCaseInsensitive();
             break;
         default:
             ++num_reg_lookup_none;

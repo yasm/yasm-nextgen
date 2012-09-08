@@ -114,6 +114,10 @@ public:
         return StringRef(getNameStart(), getLength());
     }
 
+    bool isCaseSensitive() const { return m_entry->isCaseSensitive(); }
+    void setCaseSensitive(bool v) { m_entry->setCaseSensitive(v); }
+    void setCaseInsensitive() { m_entry->setCaseInsensitive(); }
+
     /// If this is a source-language keyword, this API
     /// can be used to cause the lexer to map identifiers to source-language
     /// tokens.
@@ -216,7 +220,8 @@ class IdentifierTable
 {
     // Shark shows that using MallocAllocator is *much* slower than using this
     // BumpPtrAllocator!
-    typedef llvm::StringMap<IdentifierInfo*, llvm::BumpPtrAllocator> HashTable;
+    typedef llvm::StringMap<IdentifierInfo*, llvm::BumpPtrAllocator,
+                            false> HashTable;
     HashTable m_hash_table;
 
 public:

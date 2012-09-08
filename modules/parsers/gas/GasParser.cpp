@@ -166,7 +166,8 @@ GasParser::GasParser(const ParserModule& module,
     };
 
     for (size_t i=0; i<sizeof(gas_dirs_init)/sizeof(gas_dirs_init[0]); ++i)
-        m_gas_dirs[gas_dirs_init[i].name] = &gas_dirs_init[i];
+        m_gas_dirs.GetOrCreateValue(gas_dirs_init[i].name, &gas_dirs_init[i])
+            .setCaseInsensitive();
 }
 
 GasParser::~GasParser()

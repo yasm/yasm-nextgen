@@ -17,8 +17,10 @@
 #include <cassert>
 using namespace llvm;
 
-StringMapImpl::StringMapImpl(unsigned InitSize, unsigned itemSize) {
+StringMapImpl::StringMapImpl(unsigned InitSize, unsigned itemSize,
+                             bool caseSensitiveOnly) {
   ItemSize = itemSize;
+  CaseSensitiveOnly = caseSensitiveOnly;
   
   // If a size is specified, initialize the table with that many buckets.
   if (InitSize) {
@@ -61,7 +63,7 @@ unsigned StringMapImpl::LookupBucketFor(StringRef Name) {
     init(16);
     HTSize = NumBuckets;
   }
-  unsigned FullHashValue = HashString(Name);
+  unsigned FullHashValue = CaseSensitiveOnly?HashString(Name):HashStringCI(Name);
   unsigned BucketNo = FullHashValue & (HTSize-1);
   unsigned *HashTable = (unsigned *)(TheTable + NumBuckets + 1);
 
@@ -94,7 +96,9 @@ unsigned StringMapImpl::LookupBucketFor(StringRef Name) {
       // Do the comparison like this because Name isn't necessarily
       // null-terminated!
       char *ItemStr = (char*)BucketItem+ItemSize;
-      if (Name == StringRef(ItemStr, BucketItem->getKeyLength())) {
+      if ((!CaseSensitiveOnly && !BucketItem->isCaseSensitive() &&
+           Name.equals_lower(StringRef(ItemStr, BucketItem->getKeyLength()))) ||
+          Name == StringRef(ItemStr, BucketItem->getKeyLength())) {
         // We found a match!
         return BucketNo;
       }
@@ -116,7 +120,7 @@ unsigned StringMapImpl::LookupBucketFor(StringRef Name) {
 int StringMapImpl::FindKey(StringRef Key) const {
   unsigned HTSize = NumBuckets;
   if (HTSize == 0) return -1;  // Really empty table?
-  unsigned FullHashValue = HashString(Key);
+  unsigned FullHashValue = CaseSensitiveOnly?HashString(Key):HashStringCI(Key);
   unsigned BucketNo = FullHashValue & (HTSize-1);
   unsigned *HashTable = (unsigned *)(TheTable + NumBuckets + 1);
 
@@ -138,7 +142,9 @@ int StringMapImpl::FindKey(StringRef Key) const {
       // Do the comparison like this because NameStart isn't necessarily
       // null-terminated!
       char *ItemStr = (char*)BucketItem+ItemSize;
-      if (Key == StringRef(ItemStr, BucketItem->getKeyLength())) {
+      if ((!CaseSensitiveOnly && !BucketItem->isCaseSensitive() &&
+           Key.equals_lower(StringRef(ItemStr, BucketItem->getKeyLength()))) ||
+          Key == StringRef(ItemStr, BucketItem->getKeyLength())) {
         // We found a match!
         return BucketNo;
       }

@@ -43,10 +43,15 @@ public:
 /// StringMapEntryBase - Shared base class of StringMapEntry instances.
 class StringMapEntryBase {
   unsigned StrLen;
+  bool CaseSensitive;
 public:
-  explicit StringMapEntryBase(unsigned Len) : StrLen(Len) {}
+  explicit StringMapEntryBase(unsigned Len, bool caseSensitive=true)
+    : StrLen(Len), CaseSensitive(caseSensitive) {}
 
   unsigned getKeyLength() const { return StrLen; }
+  bool isCaseSensitive() const { return CaseSensitive; }
+  void setCaseSensitive(bool v) { CaseSensitive = v; }
+  void setCaseInsensitive() { CaseSensitive = false; }
 };
 
 class YASM_LIB_EXPORT StringMapImpl {
@@ -59,15 +64,18 @@ protected:
   unsigned NumItems;
   unsigned NumTombstones;
   unsigned ItemSize;
+  bool CaseSensitiveOnly;
 protected:
-  explicit StringMapImpl(unsigned itemSize) : ItemSize(itemSize) {
+  explicit StringMapImpl(unsigned itemSize, bool caseSensitiveOnly=false)
+    : ItemSize(itemSize), CaseSensitiveOnly(caseSensitiveOnly) {
     // Initialize the map with zero buckets to allocation.
     TheTable = 0;
     NumBuckets = 0;
     NumItems = 0;
     NumTombstones = 0;
   }
-  StringMapImpl(unsigned InitSize, unsigned ItemSize);
+  StringMapImpl(unsigned InitSize, unsigned ItemSize,
+                bool caseSensitiveOnly=false);
   void RehashTable();
 
   /// LookupBucketFor - Look up the bucket that the specified string should end
@@ -111,10 +119,10 @@ class StringMapEntry : public StringMapEntryBase {
 public:
   ValueTy second;
 
-  explicit StringMapEntry(unsigned strLen)
-    : StringMapEntryBase(strLen), second() {}
-  StringMapEntry(unsigned strLen, const ValueTy &V)
-    : StringMapEntryBase(strLen), second(V) {}
+  explicit StringMapEntry(unsigned strLen, bool caseSensitive=true)
+    : StringMapEntryBase(strLen, caseSensitive), second() {}
+  StringMapEntry(unsigned strLen, const ValueTy &V, bool caseSensitive=true)
+    : StringMapEntryBase(strLen, caseSensitive), second(V) {}
 
   StringRef getKey() const {
     return StringRef(getKeyData(), getKeyLength());
@@ -225,18 +233,22 @@ public:
 /// keys that are "strings", which are basically ranges of bytes. This does some
 /// funky memory allocation and hashing things to make it extremely efficient,
 /// storing the string data *after* the value in the map.
-template<typename ValueTy, typename AllocatorTy = MallocAllocator>
+template<typename ValueTy, typename AllocatorTy = MallocAllocator,
+    bool CaseSensitive=true>
 class StringMap : public StringMapImpl {
   AllocatorTy Allocator;
 public:
   typedef StringMapEntry<ValueTy> MapEntryTy;
   
-  StringMap() : StringMapImpl(static_cast<unsigned>(sizeof(MapEntryTy))) {}
+  StringMap() : StringMapImpl(static_cast<unsigned>(sizeof(MapEntryTy)),
+                              CaseSensitive) {}
   explicit StringMap(unsigned InitialSize)
-    : StringMapImpl(InitialSize, static_cast<unsigned>(sizeof(MapEntryTy))) {}
+    : StringMapImpl(InitialSize, static_cast<unsigned>(sizeof(MapEntryTy)),
+                    CaseSensitive) {}
 
-  explicit StringMap(AllocatorTy A)
-    : StringMapImpl(static_cast<unsigned>(sizeof(MapEntryTy))), Allocator(A) {}
+  explicit StringMap(AllocatorTy A, bool caseInsensitiveOk=false)
+    : StringMapImpl(static_cast<unsigned>(sizeof(MapEntryTy)),
+                    CaseSensitive), Allocator(A) {}
 
   StringMap(const StringMap &RHS)
     : StringMapImpl(static_cast<unsigned>(sizeof(MapEntryTy))) {

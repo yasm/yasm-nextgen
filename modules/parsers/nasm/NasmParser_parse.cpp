@@ -53,8 +53,6 @@
 #include "modules/parsers/nasm/NasmStringParser.h"
 
 
-STATISTIC(num_pseudo_insn_lookup, "Number of pseudo-instruction lookups");
-STATISTIC(num_keyword_lookup, "Number of keyword lookups");
 STATISTIC(num_directive, "Number of directives parsed");
 STATISTIC(num_insn, "Number of instructions parsed");
 STATISTIC(num_insn_operand, "Number of instruction operands parsed");
@@ -62,302 +60,6 @@ STATISTIC(num_insn_operand, "Number of instruction operands parsed");
 using namespace yasm;
 using namespace yasm::parser;
 
-/// Identify pseudo-instructions.  We can't simply pre-populate IdentifierTable
-/// because of large numbers of combinations due to case-insensitivity.
-void
-NasmParser::CheckPseudoInsn(IdentifierInfo* ii)
-{
-    /// All possible pseudo-instructions (to avoid dynamic allocation).
-    static const PseudoInsn equ_insn = {PseudoInsn::EQU, 0};
-    static const PseudoInsn incbin_insn = {PseudoInsn::INCBIN, 0};
-    static const PseudoInsn times_insn = {PseudoInsn::TIMES, 0};
-
-    if (!ii->isUnknown())
-        return;
-
-    ++num_pseudo_insn_lookup;
-    PseudoInsn* pseudo;
-
-    // Do a case-insensitive match against pseudoinstructions.
-    // This is a fairly "hot" piece of code.
-    const char* name = ii->getNameStart();
-    unsigned int len = ii->getLength();
-    switch (name[0])
-    {
-        case 'e':
-        case 'E':
-            // EQU
-            if (len != 3 ||
-                (name[1] != 'q' && name[1] != 'Q') ||
-                (name[2] != 'u' && name[2] != 'U'))
-                return;
-            ii->setCustom(&equ_insn);
-            return;
-        case 'i':
-        case 'I':
-            // INCBIN
-            if (len != 6 ||
-                (name[1] != 'n' && name[1] != 'N') ||
-                (name[2] != 'c' && name[2] != 'C') ||
-                (name[3] != 'b' && name[3] != 'B') ||
-                (name[4] != 'i' && name[4] != 'I') ||
-                (name[5] != 'n' && name[5] != 'N'))
-                return;
-            ii->setCustom(&incbin_insn);
-            return;
-        case 'd':
-        case 'D':
-            // Declare data
-            if (len > 3)
-                return;
-            pseudo = m_data_insns;
-            ++name;
-            break;
-        case 'r':
-        case 'R':
-            // Reserve space
-            if (len > 5 ||
-                (name[1] != 'e' && name[1] != 'E') ||
-                (name[2] != 's' && name[2] != 'S'))
-                return;
-            pseudo = m_reserve_insns;
-            name += 3;
-            break;
-        case 't':
-        case 'T':
-            // TIMES
-            if (len != 5 ||
-                (name[1] != 'i' && name[1] != 'I') ||
-                (name[2] != 'm' && name[2] != 'M') ||
-                (name[3] != 'e' && name[3] != 'E') ||
-                (name[4] != 's' && name[4] != 'S'))
-                return;
-            ii->setCustom(&times_insn);
-            return;
-        default:
-            return;
-    }
-
-    // Handle declare data / reserve space size lookup
-    unsigned int idx = 0;
-    switch (name[0])
-    {
-        case 'b': case 'B': idx = DB; ++name; break;
-        case 'h': case 'H':
-            if (name[1] != 'w' && name[1] != 'W')
-                return;
-            idx = DHW;
-            name += 2;
-            break;
-        case 'w': case 'W': idx = DW; ++name; break;
-        case 'd': case 'D':
-            idx = DD;
-            ++name;
-            if (name[0] == 'q' || name[0] == 'Q')
-            {
-                idx = DO;       // ddq is an alias for do
-                ++name;
-            }
-            break;
-        case 'q': case 'Q': idx = DQ; ++name; break;
-        case 't': case 'T': idx = DT; ++name; break;
-        case 'o': case 'O': idx = DO; ++name; break;
-        case 'y': case 'Y': idx = DY; ++name; break;
-        default:    return;
-    }
-
-    if (name[0] != '\0')
-        return;
-    ii->setCustom(&pseudo[idx]);
-}
-
-/// Identify keywords.  We can't simply pre-populate IdentifierTable
-/// because of large numbers of combinations due to case-insensitivity.
-bool
-NasmParser::CheckKeyword(IdentifierInfo* ii)
-{
-    if (!ii->isUnknown())
-        return false;
-
-    ++num_keyword_lookup;
-
-    // Do a case-insensitive match against keywords.
-    // This is a fairly "hot" piece of code.
-    const char* name = ii->getNameStart();
-    unsigned int len = ii->getLength();
-    int kind = NasmToken::unknown;
-
-    switch (name[0])
-    {
-        case 'a':
-        case 'A':
-            // ABS
-            if (len != 3 ||
-                (name[1] != 'b' && name[1] != 'B') ||
-                (name[2] != 's' && name[2] != 'S'))
-                return false;
-            ii->setTokenKind(NasmToken::kw_abs);
-            m_token.setKind(NasmToken::kw_abs);
-            return true;
-        case 'b':
-        case 'B':
-            // BYTE
-            if (len != 4 ||
-                (name[1] != 'y' && name[1] != 'Y') ||
-                (name[2] != 't' && name[2] != 'T') ||
-                (name[3] != 'e' && name[3] != 'E'))
-                return false;
-            ii->setTokenKind(NasmToken::kw_byte);
-            m_token.setKind(NasmToken::kw_byte);
-            return true;
-        case 'd':
-        case 'D':
-            // DWORD
-            if (len == 5)
-            {
-                kind = NasmToken::kw_dword;
-                ++name;
-                break;  // check for "WORD" suffix
-            }
-            // DQWORD
-            if (len == 6 &&
-                (name[1] == 'q' || name[1] == 'Q'))
-            {
-                kind = NasmToken::kw_dqword;
-                name += 2;
-                break;  // check for "WORD" suffix
-            }
-            return false;
-        case 'h':
-        case 'H':
-            // HWORD
-            if (len != 5)
-                return false;
-            kind = NasmToken::kw_hword;
-            ++name;
-            break;  // check for "WORD" suffix
-        case 'l':
-        case 'L':
-            // LONG
-            if (len != 4 ||
-                (name[1] != 'o' && name[1] != 'O') ||
-                (name[2] != 'n' && name[2] != 'N') ||
-                (name[3] != 'g' && name[3] != 'G'))
-                return false;
-            ii->setTokenKind(NasmToken::kw_long);
-            m_token.setKind(NasmToken::kw_long);
-            return true;
-        case 'n':
-        case 'N':
-            // NOSPLIT
-            if (len != 7 ||
-                (name[1] != 'o' && name[1] != 'O') ||
-                (name[2] != 's' && name[2] != 'S') ||
-                (name[3] != 'p' && name[3] != 'P') ||
-                (name[4] != 'l' && name[4] != 'L') ||
-                (name[5] != 'i' && name[5] != 'I') ||
-                (name[6] != 't' && name[6] != 'T'))
-                return false;
-            ii->setTokenKind(NasmToken::kw_nosplit);
-            m_token.setKind(NasmToken::kw_nosplit);
-            return true;
-        case 'o':
-        case 'O':
-            // OWORD
-            if (len != 5)
-                return false;
-            kind = NasmToken::kw_oword;
-            ++name;
-            break;  // check for "WORD" suffix
-        case 'q':
-        case 'Q':
-            // QWORD
-            if (len != 5)
-                return false;
-            kind = NasmToken::kw_qword;
-            ++name;
-            break;  // check for "WORD" suffix
-        case 'r':
-        case 'R':
-            // REL
-            if (len != 3 ||
-                (name[1] != 'e' && name[1] != 'E') ||
-                (name[2] != 'l' && name[2] != 'L'))
-                return false;
-            ii->setTokenKind(NasmToken::kw_rel);
-            m_token.setKind(NasmToken::kw_rel);
-            return true;
-        case 's':
-        case 'S':
-            // SEG
-            if (len == 3 &&
-                (name[1] == 'e' || name[1] == 'E') &&
-                (name[2] == 'g' || name[2] == 'G'))
-            {
-                ii->setTokenKind(NasmToken::kw_seg);
-                m_token.setKind(NasmToken::kw_seg);
-                return true;
-            }
-            if (len == 6 &&
-                (name[1] == 't' || name[1] == 'T') &&
-                (name[2] == 'r' || name[2] == 'R') &&
-                (name[3] == 'i' || name[3] == 'I') &&
-                (name[4] == 'c' || name[4] == 'C') &&
-                (name[5] == 't' || name[5] == 'T'))
-            {
-                ii->setTokenKind(NasmToken::kw_strict);
-                m_token.setKind(NasmToken::kw_strict);
-                return true;
-            }
-            return false;
-        case 't':
-        case 'T':
-            // TWORD
-            if (len == 5 && (name[1] == 'w' || name[1] == 'W'))
-            {
-                kind = NasmToken::kw_tword;
-                ++name;
-                break;  // check for "WORD" suffix
-            }
-            return false;
-        case 'w':
-        case 'W':
-            // WRT
-            if (len == 3 &&
-                (name[1] == 'r' || name[1] == 'R') &&
-                (name[2] == 't' || name[2] == 'T'))
-            {
-                ii->setTokenKind(NasmToken::kw_wrt);
-                m_token.setKind(NasmToken::kw_wrt);
-                return true;
-            }
-            // WORD
-            if (len != 4)
-                return false;
-            kind = NasmToken::kw_word;
-            break;  // check for "WORD" suffix
-        case 'y':
-        case 'Y':
-            // YWORD
-            if (len != 5)
-                return false;
-            kind = NasmToken::kw_yword;
-            ++name;
-            break;  // check for "WORD" suffix
-        default:
-            return false;
-    }
-
-    // Common "WORD" suffix matching
-    if ((name[0] != 'w' && name[0] != 'W') ||
-        (name[1] != 'o' && name[1] != 'O') ||
-        (name[2] != 'r' && name[2] != 'R') ||
-        (name[3] != 'd' && name[3] != 'D'))
-        return false;
-    ii->setTokenKind(kind);
-    m_token.setKind(kind);
-    return true;
-}
 
 void
 NasmParser::DoParse()
@@ -542,10 +244,6 @@ NasmParser::ParseLine()
             break;
         }
         case NasmToken::identifier:
-            // check for keyword
-            if (CheckKeyword(m_token.getIdentifierInfo()))
-                return ParseLine();  // recognized, reparse
-            //@fallthrough@
         case NasmToken::label:
         {
             // Might be any one of the following cases:
@@ -569,7 +267,6 @@ NasmParser::ParseLine()
             if (m_token.is(Token::identifier))
             {
                 IdentifierInfo* ii2 = m_token.getIdentifierInfo();
-                CheckPseudoInsn(ii2);
                 const PseudoInsn* pseudo = ii2->getCustom<const PseudoInsn>();
                 if (pseudo && pseudo->type == PseudoInsn::EQU)
                 {
@@ -721,7 +418,6 @@ NasmParser::ParseExp()
 
     SourceLocation exp_source = m_token.getLocation();
     IdentifierInfo* ii = m_token.getIdentifierInfo();
-    CheckPseudoInsn(ii);
     const PseudoInsn* pseudo = ii->getCustom<const PseudoInsn>();
     if (!pseudo)
     {
@@ -1115,9 +811,6 @@ NasmParser::ParseOperand()
                 op.setTargetMod(tmod);
                 return op;
             }
-            // Might be an unrecognized keyword.
-            if (CheckKeyword(ii))
-                return ParseOperand();  // recognized, reparse
             /*@fallthrough@*/
         }
         default:
@@ -1208,9 +901,6 @@ NasmParser::ParseMemoryAddress()
                 }
                 return op;
             }
-            // Might be an unrecognized keyword.
-            if (CheckKeyword(ii))
-                return ParseMemoryAddress();    // recognized, reparse
             /*@fallthrough@*/
         }
         default:
@@ -1284,12 +974,6 @@ NasmParser::ParseExpr(Expr& e, const ParseExprTerm* parse_term)
 
     for (;;)
     {
-        if (m_token.is(NasmToken::identifier))
-        {
-            IdentifierInfo* ii = m_token.getIdentifierInfo();
-            if (!CheckKeyword(ii))
-                break;
-        }
         if (m_token.isNot(NasmToken::kw_wrt))
             break;
         ConsumeToken();
@@ -1611,9 +1295,6 @@ NasmParser::ParseExpr6(Expr& e, const ParseExprTerm* parse_term)
                 e = Expr(*reg, m_token.getLocation());
                 break;
             }
-            // Might be an unrecognized keyword.
-            if (CheckKeyword(ii))
-                return ParseExpr6(e, parse_term);   // recognized, reparse
             /*@fallthrough@*/
         }
         case NasmToken::label:

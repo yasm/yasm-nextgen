@@ -59,7 +59,7 @@ public:
         Directives::Flags m_flags;
     };
 
-    typedef llvm::StringMap<Dir> DirMap;
+    typedef llvm::StringMap<Dir, llvm::BumpPtrAllocator, false> DirMap;
     DirMap m_dirs;
 };
 
@@ -77,13 +77,14 @@ Directives::~Directives()
 void
 Directives::Add(StringRef name, Directive handler, Flags flags)
 {
-    m_impl->m_dirs[name.lower()] = Impl::Dir(handler, flags);
+    m_impl->m_dirs.GetOrCreateValue(name, Impl::Dir(handler, flags))
+        .setCaseInsensitive();
 }
 
 bool
 Directives::get(Directive* dir, StringRef name) const
 {
-    Impl::DirMap::iterator p = m_impl->m_dirs.find(name.lower());
+    Impl::DirMap::iterator p = m_impl->m_dirs.find(name);
     if (p == m_impl->m_dirs.end())
         return false;
 
