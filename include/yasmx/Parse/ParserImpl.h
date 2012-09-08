@@ -63,7 +63,7 @@ public:
         = 0;
 };
 
-class YASM_LIB_EXPORT ParserImpl : public Parser
+class YASM_LIB_EXPORT ParserImpl
 {
 public:
     Preprocessor& m_preproc;
@@ -76,10 +76,10 @@ private:
     unsigned short m_paren_count, m_bracket_count;
 
 public:
-    ParserImpl(const ParserModule& module, Preprocessor& preproc);
+    ParserImpl(Preprocessor& preproc);
     virtual ~ParserImpl();
 
-    virtual Preprocessor& getPreprocessor() const;
+    Preprocessor& getPreprocessor() const { return m_preproc; }
 
     /// Return true if the cur token is '(' or ')'.
     bool isTokenParen() const

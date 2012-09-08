@@ -42,9 +42,8 @@ ParseExprTerm::~ParseExprTerm()
 {
 }
 
-ParserImpl::ParserImpl(const ParserModule& module, Preprocessor& preproc)
-    : Parser(module)
-    , m_preproc(preproc)
+ParserImpl::ParserImpl(Preprocessor& preproc)
+    : m_preproc(preproc)
     , m_paren_count(0)
     , m_bracket_count(0)
 {
@@ -53,12 +52,6 @@ ParserImpl::ParserImpl(const ParserModule& module, Preprocessor& preproc)
 
 ParserImpl::~ParserImpl()
 {
-}
-
-Preprocessor&
-ParserImpl::getPreprocessor() const
-{
-    return m_preproc;
 }
 
 SourceLocation

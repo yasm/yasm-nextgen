@@ -44,7 +44,8 @@ GasParser::GasParser(const ParserModule& module,
                      DiagnosticsEngine& diags,
                      SourceManager& sm,
                      HeaderSearch& headers)
-    : ParserImpl(module, m_gas_preproc)
+    : Parser(module)
+    , ParserImpl(m_gas_preproc)
     , m_gas_preproc(diags, sm, headers)
     , m_intel(false)
     , m_reg_prefix(true)
@@ -223,6 +224,12 @@ GasParser::AddDirectives(Directives& dirs, StringRef parser)
         dirs.Add(".global", &DirGlobalMulti, Directives::ID_REQUIRED);
         dirs.Add(".globl",  &DirGlobalMulti, Directives::ID_REQUIRED);
     }
+}
+
+Preprocessor&
+GasParser::getPreprocessor() const
+{
+    return ParserImpl::getPreprocessor();
 }
 
 void

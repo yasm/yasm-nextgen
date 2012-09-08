@@ -64,7 +64,7 @@ public:
     bool operator() (Expr& e, ParserImpl& parser, bool* handled) const;
 };
 
-class YASM_STD_EXPORT NasmParser : public ParserImpl
+class YASM_STD_EXPORT NasmParser : public Parser, public ParserImpl
 {
 public:
     NasmParser(const ParserModule& module,
@@ -74,6 +74,8 @@ public:
     ~NasmParser();
 
     void AddDirectives(Directives& dirs, StringRef parser);
+
+    Preprocessor& getPreprocessor() const;
 
     static StringRef getName() { return "NASM-compatible parser"; }
     static StringRef getKeyword() { return "nasm"; }

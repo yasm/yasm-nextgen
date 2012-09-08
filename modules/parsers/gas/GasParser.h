@@ -72,7 +72,7 @@ struct GasDirLookup
     unsigned int param;
 };
 
-class YASM_STD_EXPORT GasParser : public ParserImpl
+class YASM_STD_EXPORT GasParser : public Parser, public ParserImpl
 {
 public:
     GasParser(const ParserModule& module,
@@ -82,6 +82,8 @@ public:
     ~GasParser();
 
     void AddDirectives(Directives& dirs, StringRef parser);
+
+    Preprocessor& getPreprocessor() const;
 
     static StringRef getName() { return "GNU AS (GAS)-compatible parser"; }
     static StringRef getKeyword() { return "gas"; }

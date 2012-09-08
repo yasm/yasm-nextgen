@@ -91,7 +91,8 @@ NasmParser::NasmParser(const ParserModule& module,
                        DiagnosticsEngine& diags,
                        SourceManager& sm,
                        HeaderSearch& headers)
-    : ParserImpl(module, m_nasm_preproc)
+    : Parser(module)
+    , ParserImpl(m_nasm_preproc)
     , m_nasm_preproc(diags, sm, headers)
 {
 }
@@ -256,6 +257,12 @@ NasmParser::AddDirectives(Directives& dirs, StringRef parser)
         dirs.Add("global", &DirGlobal, Directives::ID_REQUIRED);
         dirs.Add("common", &DirCommon, Directives::ID_REQUIRED);
     }
+}
+
+Preprocessor&
+NasmParser::getPreprocessor() const
+{
+    return ParserImpl::getPreprocessor();
 }
 
 void
