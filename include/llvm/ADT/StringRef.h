@@ -28,9 +28,11 @@ namespace llvm {
   class StringRef;
 
   /// Helper functions for StringRef::getAsInteger.
+  YASM_LIB_EXPORT
   bool getAsUnsignedInteger(StringRef Str, unsigned Radix,
                             unsigned long long &Result);
 
+  YASM_LIB_EXPORT
   bool getAsSignedInteger(StringRef Str, unsigned Radix, long long &Result);
 
   /// StringRef - Represent a constant reference to a string, i.e. a character
@@ -547,6 +549,7 @@ namespace llvm {
   /// @}
 
   /// \brief Compute a hash_code for a StringRef.
+  YASM_LIB_EXPORT
   hash_code hash_value(StringRef S);
 
   // StringRefs can be treated like a POD type.
