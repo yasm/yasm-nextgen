@@ -586,9 +586,11 @@ void raw_fd_ostream::close() {
 
 uint64_t raw_fd_ostream::seek(uint64_t off) {
   flush();
-  pos = ::lseek(FD, off, SEEK_SET);
-  if (pos != off)
+  off_t newpos = ::lseek(FD, off, SEEK_SET);
+  if (newpos == (off_t)-1)
     error_detected();
+  else
+    pos = newpos;
   return pos;
 }
 
