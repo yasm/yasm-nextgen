@@ -31,6 +31,7 @@
 ///
 #include <string>
 
+#include "llvm/ADT/StringRef.h"
 #include "yasmx/Basic/LLVM.h"
 #include "yasmx/Basic/SourceLocation.h"
 #include "yasmx/Config/export.h"

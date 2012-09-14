@@ -7,6 +7,7 @@
  */
 #include <cctype>
 
+#include "llvm/ADT/StringRef.h"
 #include "yasmx/IntNum.h"
 
 #include "nasm.h"

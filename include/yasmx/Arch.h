@@ -34,6 +34,7 @@
 #include <utility>
 #include <vector>
 
+#include "llvm/ADT/StringRef.h"
 #include "yasmx/Basic/LLVM.h"
 #include "yasmx/Config/export.h"
 #include "yasmx/DebugDumper.h"
