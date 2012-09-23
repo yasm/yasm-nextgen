@@ -100,6 +100,9 @@ private:
         unsigned int size;
     };
 
+    void CheckPseudoInsn(IdentifierInfo* ii);
+    bool CheckKeyword(IdentifierInfo* ii);
+
     void DefineLabel(SymbolRef sym, SourceLocation source, bool local);
 
     void DoParse();
