@@ -1808,7 +1808,12 @@ ElfObject::DirType(DirectiveInfo& info, DiagnosticsEngine& diags)
         ++nv;
 
     // Pull new type from param
-    if (nv == end || !nv->isId())
+    if (nv == end)
+    {
+        diags.Report((nv-1)->getValueRange().getEnd(), diag::err_expected_ident);
+        return;
+    }
+    if (!nv->isId())
     {
         diags.Report(nv->getValueRange().getBegin(), diag::err_expected_ident);
         return;
