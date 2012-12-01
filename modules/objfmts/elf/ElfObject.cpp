@@ -1870,6 +1870,11 @@ ElfObject::DirWeak(DirectiveInfo& info, DiagnosticsEngine& diags)
     for (NameValues::iterator nv = namevals.begin(), end = namevals.end();
          nv != end; ++nv)
     {
+        if (!nv->isId())
+        {
+            diags.Report(nv->getValueRange().getBegin(), diag::err_value_id);
+            continue;
+        }
         SymbolRef sym = info.getObject().getSymbol(nv->getId());
         sym->CheckedDeclare(Symbol::GLOBAL, nv->getValueRange().getBegin(),
                             diags);
