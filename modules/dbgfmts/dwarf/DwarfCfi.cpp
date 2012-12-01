@@ -763,7 +763,7 @@ DwarfDebug::DirCheck(DirectiveInfo& info,
     if (!m_cur_fde)
     {
         diags.Report(info.getSource(), diag::warn_outside_cfiproc);
-        return true;
+        return false;
     }
 
     if (nargs == 0)
