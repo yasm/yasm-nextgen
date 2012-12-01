@@ -805,6 +805,8 @@ Expr::Simplify(DiagnosticsEngine& diags, bool simplify_reg_mul)
 bool
 Expr::Contains(int type, int pos) const
 {
+    if (m_terms.empty())
+        return false;
     if (pos < 0)
         pos += m_terms.size();
     assert(pos >= 0 && pos < static_cast<int>(m_terms.size()));
