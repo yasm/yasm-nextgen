@@ -50,6 +50,8 @@ DwarfDebug::DwarfDebug(const DebugFormatModule& module, Object& object)
     , m_fdes_owner(m_fdes)
     , m_cur_fde(0)
 {
+    m_last_address.bc = 0;
+    m_last_address.off = 0;
     switch (m_format)
     {
         case FORMAT_32BIT: m_sizeof_offset = 4; break;
