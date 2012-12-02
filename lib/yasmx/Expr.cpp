@@ -456,6 +456,8 @@ Expr::MakeIdent(DiagnosticsEngine& diags, int pos)
 static void
 ClearExcept(ExprTerms& terms, int pos, int keep=-1)
 {
+    if (terms.empty())
+        return;
     if (keep > 0)
         assert(!terms[keep].isOp());      // unsupported
     if (pos < 0)
@@ -608,6 +610,8 @@ Expr::TransformNeg()
 void
 Expr::LevelOp(DiagnosticsEngine& diags, bool simplify_reg_mul, int pos)
 {
+    if (m_terms.empty())
+        return;
     if (pos < 0)
         pos += m_terms.size();
     assert(pos >= 0 && pos < static_cast<int>(m_terms.size()));
@@ -855,12 +859,14 @@ Expr::Substitute(const ExprTerm* subst_begin, const ExprTerm* subst_end)
 static Expr
 ExtractLHS(Expr& e, int pos)
 {
+    Expr retval;
     ExprTerms& terms = e.getTerms();
+    if (terms.empty())
+        return retval;
     if (pos < 0)
         pos += terms.size();
     assert(pos >= 0 && pos < static_cast<int>(terms.size()));
 
-    Expr retval;
     if (pos == 0)
         return retval;
 
@@ -1018,7 +1024,7 @@ Infix(raw_ostream& os, const Expr& e, int base, int pos=-1)
     const char* opstr = "";
     const ExprTerms& terms = e.getTerms();
 
-    if (terms.size() == 0)
+    if (terms.empty())
         return;
 
     if (pos < 0)
@@ -1173,6 +1179,8 @@ yasm::isNeg1Sym(Expr& e,
                 bool loc_ok)
 {
     ExprTerms& terms = e.getTerms();
+    if (terms.empty())
+        return false;
     if (*pos < 0)
         *pos += terms.size();
     assert(*pos >= 0 && *pos < static_cast<int>(terms.size()));
