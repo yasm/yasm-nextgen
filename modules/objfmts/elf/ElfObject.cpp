@@ -1641,7 +1641,7 @@ ElfObject::DirGasSection(DirectiveInfo& info, DiagnosticsEngine& diags)
     {
         if (nv == nvs.end())
         {
-            diags.Report(nv->getValueRange().getBegin(),
+            diags.Report((nv-1)->getValueRange().getEnd(),
                          diag::err_expected_group_name);
             return;
         }
