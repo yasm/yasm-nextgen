@@ -867,14 +867,20 @@ ElfOutput::ConvertValueToBytes(Value& value,
             //
             // This is only done if the symbol is relocated against the
             // section instead of the symbol itself.
+            // Also, if the symbol's section has the merge flag set, we can't
+            // relocate against the section.
             Location symloc;
             if (sym->getLabel(&symloc))
             {
-                // Relocate to section start
                 Section* sym_sect = symloc.bc->getContainer()->getSection();
-                sym = sym_sect->getSymbol();
+                ElfSection* elfsect = sym_sect->getAssocData<ElfSection>();
+                if ((elfsect->getFlags() & SHF_MERGE) == 0)
+                {
+                    // Relocate to section start
+                    sym = sym_sect->getSymbol();
 
-                intn += symloc.getOffset();
+                    intn += symloc.getOffset();
+                }
             }
         }
 
