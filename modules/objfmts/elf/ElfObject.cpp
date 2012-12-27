@@ -1592,7 +1592,13 @@ ElfObject::DirGasSection(DirectiveInfo& info, DiagnosticsEngine& diags)
             return;
         }
         ++nv;
-        if (nv == nvs.end() || !nv->isId())
+        if (nv == nvs.end())
+        {
+            diags.Report((nv-1)->getValueRange().getEnd(),
+                         diag::err_expected_ident);
+            return;
+        }
+        if (!nv->isId())
         {
             diags.Report(nv->getValueRange().getBegin(),
                          diag::err_expected_ident);
@@ -1619,21 +1625,23 @@ ElfObject::DirGasSection(DirectiveInfo& info, DiagnosticsEngine& diags)
     // Handle merge entity size
     if ((flags & SHF_MERGE) != 0)
     {
-        if (nv == nvs.end())
+        if (nv != nvs.end())
         {
-            diags.Report(nv->getValueRange().getBegin(),
-                         diag::err_expected_merge_entity_size);
-            return;
+            IntNum merge;
+            bool merge_ok;
+            DirIntNum(*nv, diags, &m_object, &merge, &merge_ok);
+            if (!merge_ok)
+                return;
+
+            elfsect->setEntSize(merge.getUInt());
+            ++nv;
         }
-
-        IntNum merge;
-        bool merge_ok;
-        DirIntNum(*nv, diags, &m_object, &merge, &merge_ok);
-        if (!merge_ok)
-            return;
-
-        elfsect->setEntSize(merge.getUInt());
-        ++nv;
+        else
+        {
+            diags.Report((nv-1)->getValueRange().getEnd(),
+                         diag::warn_expected_merge_entity_size);
+            flags &= ~SHF_MERGE;
+        }
     }
 
     // Handle group name
