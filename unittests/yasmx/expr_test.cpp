@@ -162,6 +162,12 @@ TEST_F(ExprTest, TransformNeg)
     EXPECT_EQ("a", String::Format(x));
     ExprTest::TransformNeg(x);
     EXPECT_EQ("a", String::Format(x));
+
+    // More complex nested test.
+    x = SUB(a, SHR(MUL(b, c), d));
+    EXPECT_EQ("a-((b*c)>>d)", String::Format(x));
+    ExprTest::TransformNeg(x);
+    EXPECT_EQ("a+(((b*c)>>d)*-1)", String::Format(x));
 }
 
 // Expr::Simplify() tests

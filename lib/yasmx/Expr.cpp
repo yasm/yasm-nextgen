@@ -369,12 +369,12 @@ Expr::Cleanup()
     m_terms.erase(erasefrom, m_terms.end());
 }
 
-/// Reduce depth of a subexpression.
+/// Adjust depth of a subexpression.
 /// @param terms    expression terms
 /// @param pos      term index of subexpression operator
 /// @param delta    delta to reduce depth by
 static void
-ReduceDepth(ExprTerms& terms, int pos, int delta=1)
+AdjustDepth(ExprTerms& terms, int pos, int delta)
 {
     if (pos < 0)
         pos += terms.size();
@@ -388,10 +388,10 @@ ReduceDepth(ExprTerms& terms, int pos, int delta=1)
                 continue;
             if (child.m_depth <= parent.m_depth)
                 break;      // Stop when we're out of children
-            child.m_depth -= delta;
+            child.m_depth += delta;
         }
     }
-    parent.m_depth -= delta;    // Bring up parent
+    parent.m_depth += delta;    // Adjust parent depth
 }
 
 void
@@ -420,7 +420,7 @@ Expr::MakeIdent(DiagnosticsEngine& diags, int pos)
     if (!unary)
     {
         // delete one-term non-unary operators
-        ReduceDepth(m_terms, pos);      // bring up child
+        AdjustDepth(m_terms, pos, -1);  // bring up child
         root.Clear();
     }
     else if (op < Op::NONNUM)
@@ -479,122 +479,103 @@ ClearExcept(ExprTerms& terms, int pos, int keep=-1)
 }
 
 static int
-TransformNegImpl(Expr& e,
-                 int pos,
-                 int stop_depth,
-                 int depth_delta,
-                 bool negating)
+TransformNegImpl(Expr& e, int pos, bool negating)
 {
     ExprTerms& terms = e.getTerms();
 
-    int n = pos;
-    for (; n >= 0; --n)
+    // Find non-empty root node
+    while (pos >= 0 && terms[pos].isEmpty())
+        --pos;
+    if (pos < 0)
+        return pos;
+    ExprTerm& root = terms[pos];
+    int nchild = root.getNumChild();
+    bool isop = root.isOp();
+
+    switch (root.getOp())
     {
-        ExprTerm* child = &terms[n];
-        if (child->isEmpty())
-            continue;
-
-        // Update depth as required
-        child->m_depth += depth_delta;
-        int child_depth = child->m_depth;
-
-        switch (child->getOp())
+        case Op::NEG:
         {
-            case Op::NEG:
-            {
-                int new_depth = child->m_depth;
-                child->Clear();
-                // Invert current negation state and bring up children
-                n = TransformNegImpl(e, n-1, new_depth, depth_delta - 1,
-                                     !negating);
-                break;
-            }
-            case Op::SUB:
-            {
-                child->setOp(Op::ADD);
-                int new_depth = child->m_depth+1;
-                if (negating)
-                {
-                    // -(a-b) ==> -a+b, so don't negate right side,
-                    // but do negate left side.
-                    n = TransformNegImpl(e, n-1, new_depth, depth_delta, false);
-                    n = TransformNegImpl(e, n-1, new_depth, depth_delta, true);
-                }
-                else
-                {
-                    // a-b ==> a+(-1*b), so negate right side only.
-                    n = TransformNegImpl(e, n-1, new_depth, depth_delta, true);
-                    n = TransformNegImpl(e, n-1, new_depth, depth_delta, false);
-                }
-                break;
-            }
-            case Op::ADD:
-            {
-                if (!negating)
-                    break;
-
-                // Negate all children
-                int new_depth = child->m_depth+1;
-                for (int x = 0, nchild = child->getNumChild(); x < nchild; ++x)
-                    n = TransformNegImpl(e, n-1, new_depth, depth_delta, true);
-                break;
-            }
-            case Op::MUL:
-            {
-                if (!negating)
-                    break;
-
-                // Insert -1 term.  Do this by inserting a new MUL op
-                // and changing this term to -1, to avoid having to
-                // deal with updating n.
-                terms.insert(terms.begin()+n+1,
-                             ExprTerm(child->getOp(),
-                                      child->getNumChild()+1,
-                                      child->getSource(),
-                                      child->m_depth));
-                child = &terms[n];      // need to re-get as terms may move
-                *child = ExprTerm(-1, child->getSource(), child->m_depth+1);
-                break;
-            }
-            default:
-            {
-                if (!negating)
-                    break;
-
-                // Directly negate if possible (integers or floats)
-                if (IntNum* intn = child->getIntNum())
-                {
-                    intn->CalcAssert(Op::NEG);
-                    break;
-                }
-
-                if (APFloat* fltn = child->getFloat())
-                {
-                    fltn->changeSign();
-                    break;
-                }
-
-                // Couldn't replace directly; instead replace with -1*e
-                // Insert -1 one level down, add operator at this level,
-                // and move all subterms one level down.
-                terms.insert(terms.begin()+n+1, 2,
-                             ExprTerm(Op::MUL, 2, child->getSource(),
-                                      child->m_depth));
-                child = &terms[n];      // need to re-get as terms may move
-                terms[n+1] = ExprTerm(-1, child->getSource(), child->m_depth+1);
-                child->m_depth++;
-                int new_depth = child->m_depth+1;
-                for (int x = 0, nchild = child->getNumChild(); x < nchild; ++x)
-                    n = TransformNegImpl(e, n-1, new_depth, depth_delta+1,
-                                         false);
-            }
+            AdjustDepth(terms, pos, -1);    // bring up children
+            root.Clear();
+            // Invert current negation state and go through children
+            return TransformNegImpl(e, pos-1, !negating);
         }
+        case Op::SUB:
+        {
+            root.setOp(Op::ADD);
+            --pos;
+            if (negating)
+            {
+                // -(a-b) ==> -a+b, so don't negate right side,
+                // but do negate left side.
+                pos = TransformNegImpl(e, pos, false);
+                pos = TransformNegImpl(e, pos, true);
+            }
+            else
+            {
+                // a-b ==> a+(-1*b), so negate right side only.
+                pos = TransformNegImpl(e, pos, true);
+                pos = TransformNegImpl(e, pos, false);
+            }
+            return pos;
+        }
+        case Op::ADD:
+            break; // simply negate all children
+        case Op::MUL:
+        {
+            if (!negating)
+                break;
 
-        if (child_depth <= stop_depth)
-            break;
+            // Insert -1 term.  Do this by inserting a new MUL op
+            // and changing this term to -1, to avoid having to
+            // deal with updating pos.
+            SourceLocation source = root.getSource();
+            int depth = root.m_depth;
+            terms.insert(terms.begin()+pos+1,
+                         ExprTerm(root.getOp(), nchild+1, source, depth));
+            terms[pos] = ExprTerm(-1, source, depth+1);
+            negating = false;
+        }
+        default:
+        {
+            if (!negating)
+                break;
+
+            // Directly negate if possible (integers or floats)
+            if (IntNum* intn = root.getIntNum())
+            {
+                intn->CalcAssert(Op::NEG);
+                return pos-1;
+            }
+
+            if (APFloat* fltn = root.getFloat())
+            {
+                fltn->changeSign();
+                return pos-1;
+            }
+
+            // Couldn't replace directly; instead replace with -1*e
+            // Insert -1 one level down, add operator at this level,
+            // and move all subterms one level down.
+            SourceLocation source = root.getSource();
+            int depth = root.m_depth;
+            terms.insert(terms.begin()+pos+1, 2,
+                         ExprTerm(Op::MUL, 2, source, depth));
+            terms[pos+1] = ExprTerm(-1, source, depth+1);
+            AdjustDepth(terms, pos, 1); // push down child
+            negating = false;
+        }
     }
 
-    return n;
+    // Walk through children
+    --pos;
+    if (isop)
+    {
+        for (int x = 0; x < nchild; ++x)
+            pos = TransformNegImpl(e, pos, negating);
+    }
+    return pos;
 }
 
 void
@@ -604,7 +585,7 @@ Expr::TransformNeg()
     if (!root.isOp())
         return;
 
-    TransformNegImpl(*this, m_terms.size()-1, root.m_depth-1, 0, false);
+    TransformNegImpl(*this, m_terms.size()-1, false);
 }
 
 void
@@ -756,7 +737,7 @@ again:
         else if (do_level && child.isOp(op))
         {
             root.AddNumChild(child.getNumChild() - 1);
-            ReduceDepth(m_terms, n);    // bring up children
+            AdjustDepth(m_terms, n, -1);    // bring up children
             child.Clear();              // delete levelled op
         }
     }
@@ -783,7 +764,7 @@ again:
         else if (!unary)
         {
             // delete one-term non-unary operators
-            ReduceDepth(m_terms, pos);  // bring up children
+            AdjustDepth(m_terms, pos, -1);  // bring up children
             root.Clear();
         }
     }
